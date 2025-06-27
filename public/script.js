@@ -26,17 +26,28 @@ const documentPricing = {
 };
 
 function openBookingModal() {
+    console.log('openBookingModal called');
     const modal = document.getElementById('bookingModal');
+    console.log('Modal element:', modal);
+    
+    if (!modal) {
+        alert('Modal not found! Please refresh the page.');
+        return;
+    }
+    
     modal.style.display = 'block';
     
     // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('appointmentDate').min = today;
-    
-    // Set default date to tomorrow
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    document.getElementById('appointmentDate').value = tomorrow.toISOString().split('T')[0];
+    const appointmentDate = document.getElementById('appointmentDate');
+    if (appointmentDate) {
+        appointmentDate.min = today;
+        
+        // Set default date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        appointmentDate.value = tomorrow.toISOString().split('T')[0];
+    }
     
     // Generate initial time slots
     generateTimeSlots();
@@ -104,44 +115,6 @@ function selectTimeSlot(element) {
     element.classList.add('selected');
 }
 
-// Event listeners
-document.getElementById('appointmentDate').addEventListener('change', generateTimeSlots);
-
-document.getElementById('bookingForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const selectedTimeSlot = document.querySelector('.time-slot.selected');
-    
-    if (!selectedTimeSlot) {
-        alert('Please select a time slot');
-        return;
-    }
-    
-    const booking = {
-        id: Date.now().toString(),
-        name: formData.get('clientName'),
-        email: formData.get('clientEmail'),
-        phone: formData.get('clientPhone'),
-        documentType: formData.get('documentType'),
-        date: formData.get('appointmentDate'),
-        time: selectedTimeSlot.dataset.time,
-        timeDisplay: selectedTimeSlot.textContent.trim(),
-        specialRequests: formData.get('specialRequests'),
-        price: documentPricing[formData.get('documentType')],
-        status: 'scheduled',
-        createdAt: new Date().toISOString()
-    };
-    
-    // Save booking
-    bookings.push(booking);
-    localStorage.setItem('notaryBookings', JSON.stringify(bookings));
-    
-    // Show confirmation
-    showBookingConfirmation(booking);
-    closeBookingModal();
-});
-
 function showBookingConfirmation(booking) {
     const confirmationMessage = `
         🎉 Appointment Scheduled Successfully!
@@ -163,6 +136,65 @@ function showBookingConfirmation(booking) {
     
     alert(confirmationMessage);
 }
+
+// Wait for DOM to load before setting up event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up booking system...');
+    
+    // Test if modal exists
+    const modal = document.getElementById('bookingModal');
+    console.log('Booking modal found:', !!modal);
+    
+    // Test if form exists
+    const form = document.getElementById('bookingForm');
+    console.log('Booking form found:', !!form);
+    
+    // Test if date input exists
+    const dateInput = document.getElementById('appointmentDate');
+    console.log('Date input found:', !!dateInput);
+
+    // Set up event listeners
+    if (dateInput) {
+        dateInput.addEventListener('change', generateTimeSlots);
+    }
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const selectedTimeSlot = document.querySelector('.time-slot.selected');
+            
+            if (!selectedTimeSlot) {
+                alert('Please select a time slot');
+                return;
+            }
+            
+            const booking = {
+                id: Date.now().toString(),
+                name: formData.get('clientName'),
+                email: formData.get('clientEmail'),
+                phone: formData.get('clientPhone'),
+                documentType: formData.get('documentType'),
+                date: formData.get('appointmentDate'),
+                time: selectedTimeSlot.dataset.time,
+                timeDisplay: selectedTimeSlot.textContent.trim(),
+                specialRequests: formData.get('specialRequests'),
+                price: documentPricing[formData.get('documentType')],
+                status: 'scheduled',
+                createdAt: new Date().toISOString()
+            };
+            
+            // Save booking
+            bookings.push(booking);
+            localStorage.setItem('notaryBookings', JSON.stringify(bookings));
+            
+            // Show confirmation
+            showBookingConfirmation(booking);
+            closeBookingModal();
+        });
+    }
+});
 
 // Close modal when clicking outside
 window.addEventListener('click', function(event) {
