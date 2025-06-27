@@ -21,7 +21,7 @@ document.querySelector('.cta-button').addEventListener('click', function() {
     }, 150);
     
     setTimeout(() => {
-        alert('Welcome to Remote Notary Services! Contact us to get started with your professional notarization services nationwide.');
+        alert('Welcome to Remote Notary Services! Click Book Now to get started with your professional notarization services nationwide.');
     }, 200);
 });
 
@@ -126,4 +126,102 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+});
+
+// How It Works Slider functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    const sliderTrack = document.querySelector('.slider-track');
+    let currentSlide = 0;
+    let slideInterval;
+
+    function showSlide(index) {
+        // Remove active class from all slides and dots
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        // Add active class to current slide and dot
+        if (slides[index] && dots[index]) {
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
+        }
+        
+        // Move slider track
+        if (sliderTrack) {
+            sliderTrack.style.transform = `translateX(-${index * 100}%)`;
+        }
+        
+        currentSlide = index;
+    }
+
+    function nextSlide() {
+        const nextIndex = (currentSlide + 1) % slides.length;
+        showSlide(nextIndex);
+    }
+
+    function startAutoSlide() {
+        slideInterval = setInterval(nextSlide, 4000); // Change slide every 4 seconds
+    }
+
+    function stopAutoSlide() {
+        if (slideInterval) {
+            clearInterval(slideInterval);
+        }
+    }
+
+    // Add click handlers to dots
+    dots.forEach((dot, index) => {
+        dot.addEventListener('click', function() {
+            stopAutoSlide();
+            showSlide(index);
+            setTimeout(startAutoSlide, 1000); // Restart auto-slide after 1 second
+        });
+    });
+
+    // Pause auto-slide on hover
+    const sliderContainer = document.querySelector('.slider-container');
+    if (sliderContainer) {
+        sliderContainer.addEventListener('mouseenter', stopAutoSlide);
+        sliderContainer.addEventListener('mouseleave', startAutoSlide);
+    }
+
+    // Initialize slider
+    if (slides.length > 0) {
+        showSlide(0);
+        startAutoSlide();
+    }
+
+    // Add touch/swipe support for mobile
+    let startX = 0;
+    let endX = 0;
+
+    if (sliderContainer) {
+        sliderContainer.addEventListener('touchstart', function(e) {
+            startX = e.touches[0].clientX;
+        });
+
+        sliderContainer.addEventListener('touchend', function(e) {
+            endX = e.changedTouches[0].clientX;
+            handleSwipe();
+        });
+    }
+
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = startX - endX;
+
+        if (Math.abs(diff) > swipeThreshold) {
+            stopAutoSlide();
+            if (diff > 0) {
+                // Swipe left - next slide
+                nextSlide();
+            } else {
+                // Swipe right - previous slide
+                const prevIndex = currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
+                showSlide(prevIndex);
+            }
+            setTimeout(startAutoSlide, 1000);
+        }
+    }
 }); 
