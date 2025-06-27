@@ -222,6 +222,54 @@
         </section>
     </main>
 
+    <!-- Admin Panel (Hidden) -->
+    <div id="adminPanel" class="admin-panel" style="display: none;">
+        <div class="admin-content">
+            <div class="admin-header">
+                <h2>📊 Booking Management</h2>
+                <button onclick="closeAdminPanel()" class="close-admin">&times;</button>
+            </div>
+            <div class="admin-body">
+                <div class="admin-stats">
+                    <div class="stat-card">
+                        <h3 id="totalBookings">0</h3>
+                        <p>Total Bookings</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="todayBookings">0</h3>
+                        <p>Today's Bookings</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalRevenue">$0</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+                
+                <div class="admin-section">
+                    <h3>📧 Email Testing</h3>
+                    <div class="email-controls">
+                        <input type="email" id="testEmail" placeholder="Test email address">
+                        <button onclick="sendTestConfirmationEmail()" class="btn-admin">Send Test Confirmation</button>
+                        <button onclick="sendTestMeetingLink()" class="btn-admin">Send Test Meeting Link</button>
+                        <button onclick="sendTestReminder()" class="btn-admin">Send Test Reminder</button>
+                    </div>
+                </div>
+                
+                <div class="admin-section">
+                    <h3>📅 Recent Bookings</h3>
+                    <div id="bookingsList" class="bookings-list">
+                        <!-- Bookings will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="admin-actions">
+                    <button onclick="exportBookings()" class="btn-admin">Export Bookings</button>
+                    <button onclick="clearAllBookings()" class="btn-admin danger">Clear All Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Booking Modal -->
     <div id="bookingModal" class="modal">
         <div class="modal-content">
@@ -291,6 +339,8 @@
         </div>
     </footer>
 
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html> 
