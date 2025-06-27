@@ -133,23 +133,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const slides = document.querySelectorAll('.slide');
     const dots = document.querySelectorAll('.dot');
     const sliderTrack = document.querySelector('.slider-track');
+    const sliderProgress = document.querySelector('.slider-progress');
     let currentSlide = 0;
     let slideInterval;
 
     function showSlide(index) {
-        // Remove active class from all slides and dots
-        slides.forEach(slide => slide.classList.remove('active'));
+        // Update dots
         dots.forEach(dot => dot.classList.remove('active'));
-        
-        // Add active class to current slide and dot
-        if (slides[index] && dots[index]) {
-            slides[index].classList.add('active');
+        if (dots[index]) {
             dots[index].classList.add('active');
         }
         
-        // Move slider track
+        // Check if mobile view
+        const isMobile = window.innerWidth <= 768;
+        const slideWidth = isMobile ? 100 : 33.333;
+        
+        // Move slider track smoothly
         if (sliderTrack) {
-            sliderTrack.style.transform = `translateX(-${index * 100}%)`;
+            sliderTrack.style.transform = `translateX(-${index * slideWidth}%)`;
+        }
+        
+        // Update progress bar
+        if (sliderProgress) {
+            sliderProgress.style.setProperty('--progress-position', `${index * slideWidth}%`);
         }
         
         currentSlide = index;
@@ -161,8 +167,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function startAutoSlide() {
-        slideInterval = setInterval(nextSlide, 4000); // Change slide every 4 seconds
+        slideInterval = setInterval(nextSlide, 3500); // Slightly faster for more obvious movement
     }
+    
+    // Handle window resize to recalculate positions
+    window.addEventListener('resize', function() {
+        showSlide(currentSlide);
+    });
 
     function stopAutoSlide() {
         if (slideInterval) {
@@ -175,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
         dot.addEventListener('click', function() {
             stopAutoSlide();
             showSlide(index);
-            setTimeout(startAutoSlide, 1000); // Restart auto-slide after 1 second
+            setTimeout(startAutoSlide, 1500); // Restart auto-slide after 1.5 seconds
         });
     });
 
@@ -221,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const prevIndex = currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
                 showSlide(prevIndex);
             }
-            setTimeout(startAutoSlide, 1000);
+            setTimeout(startAutoSlide, 1500);
         }
     }
 }); 
