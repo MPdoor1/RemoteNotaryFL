@@ -12,17 +12,164 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// CTA Button functionality with enhanced effect
-document.querySelector('.cta-button').addEventListener('click', function() {
-    // Add ripple effect
-    this.style.transform = 'scale(0.95)';
-    setTimeout(() => {
-        this.style.transform = 'scale(1)';
-    }, 150);
+// Booking System
+let bookings = JSON.parse(localStorage.getItem('notaryBookings') || '[]');
+
+// Pricing for different document types
+const documentPricing = {
+    'affidavit': 25,
+    'power-of-attorney': 35,
+    'real-estate': 45,
+    'business': 30,
+    'personal': 25,
+    'financial': 40
+};
+
+function openBookingModal() {
+    const modal = document.getElementById('bookingModal');
+    modal.style.display = 'block';
     
-    setTimeout(() => {
-        alert('Welcome to Remote Notary Services! Click Book Now to get started with your professional notarization services nationwide.');
-    }, 200);
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('appointmentDate').min = today;
+    
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('appointmentDate').value = tomorrow.toISOString().split('T')[0];
+    
+    // Generate initial time slots
+    generateTimeSlots();
+}
+
+function closeBookingModal() {
+    const modal = document.getElementById('bookingModal');
+    modal.style.display = 'none';
+    document.getElementById('bookingForm').reset();
+}
+
+function generateTimeSlots() {
+    const selectedDate = document.getElementById('appointmentDate').value;
+    const timeSlotsContainer = document.getElementById('timeSlots');
+    
+    if (!selectedDate) {
+        timeSlotsContainer.innerHTML = '<p>Please select a date first</p>';
+        return;
+    }
+    
+    // Business hours: 8 AM to 8 PM, 30-minute slots
+    const timeSlots = [];
+    for (let hour = 8; hour <= 19; hour++) {
+        for (let minute = 0; minute < 60; minute += 30) {
+            const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+            const displayTime = formatTime(hour, minute);
+            
+            // Check if slot is already booked
+            const isBooked = bookings.some(booking => 
+                booking.date === selectedDate && booking.time === time
+            );
+            
+            timeSlots.push({
+                time: time,
+                display: displayTime,
+                booked: isBooked
+            });
+        }
+    }
+    
+    // Generate time slot buttons
+    timeSlotsContainer.innerHTML = timeSlots.map(slot => `
+        <div class="time-slot ${slot.booked ? 'unavailable' : ''}" 
+             data-time="${slot.time}" 
+             onclick="${slot.booked ? '' : 'selectTimeSlot(this)'}">
+            ${slot.display}
+            ${slot.booked ? '<br><small>Booked</small>' : ''}
+        </div>
+    `).join('');
+}
+
+function formatTime(hour, minute) {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    return `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+}
+
+function selectTimeSlot(element) {
+    // Remove previous selections
+    document.querySelectorAll('.time-slot').forEach(slot => {
+        slot.classList.remove('selected');
+    });
+    
+    // Select current slot
+    element.classList.add('selected');
+}
+
+// Event listeners
+document.getElementById('appointmentDate').addEventListener('change', generateTimeSlots);
+
+document.getElementById('bookingForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const selectedTimeSlot = document.querySelector('.time-slot.selected');
+    
+    if (!selectedTimeSlot) {
+        alert('Please select a time slot');
+        return;
+    }
+    
+    const booking = {
+        id: Date.now().toString(),
+        name: formData.get('clientName'),
+        email: formData.get('clientEmail'),
+        phone: formData.get('clientPhone'),
+        documentType: formData.get('documentType'),
+        date: formData.get('appointmentDate'),
+        time: selectedTimeSlot.dataset.time,
+        timeDisplay: selectedTimeSlot.textContent.trim(),
+        specialRequests: formData.get('specialRequests'),
+        price: documentPricing[formData.get('documentType')],
+        status: 'scheduled',
+        createdAt: new Date().toISOString()
+    };
+    
+    // Save booking
+    bookings.push(booking);
+    localStorage.setItem('notaryBookings', JSON.stringify(bookings));
+    
+    // Show confirmation
+    showBookingConfirmation(booking);
+    closeBookingModal();
+});
+
+function showBookingConfirmation(booking) {
+    const confirmationMessage = `
+        🎉 Appointment Scheduled Successfully!
+        
+        📅 Date: ${new Date(booking.date).toLocaleDateString()}
+        ⏰ Time: ${booking.timeDisplay}
+        📋 Document: ${booking.documentType.replace('-', ' ').toUpperCase()}
+        💰 Price: $${booking.price}
+        
+        📧 Confirmation details will be sent to: ${booking.email}
+        
+        Next Steps:
+        1. You'll receive a meeting link via email
+        2. Have your ID and documents ready
+        3. Payment will be processed after the session
+        
+        Booking ID: ${booking.id}
+    `;
+    
+    alert(confirmationMessage);
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('bookingModal');
+    if (event.target === modal) {
+        closeBookingModal();
+    }
 });
 
 // Enhanced header scroll effect

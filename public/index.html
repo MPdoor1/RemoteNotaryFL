@@ -44,7 +44,7 @@
                         <p>10-15 minutes vs hours of traditional process</p>
                     </div>
                 </div>
-                <button class="cta-button">Book Now</button>
+                <button class="cta-button" onclick="openBookingModal()">Book Now</button>
             </div>
         </section>
 
@@ -221,6 +221,69 @@
             </div>
         </section>
     </main>
+
+    <!-- Booking Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Schedule Your Notarization</h2>
+                <span class="close" onclick="closeBookingModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="bookingForm">
+                    <div class="form-group">
+                        <label for="clientName">Full Name *</label>
+                        <input type="text" id="clientName" name="clientName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientEmail">Email Address *</label>
+                        <input type="email" id="clientEmail" name="clientEmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientPhone">Phone Number *</label>
+                        <input type="tel" id="clientPhone" name="clientPhone" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="documentType">Document Type *</label>
+                        <select id="documentType" name="documentType" required>
+                            <option value="">Select document type</option>
+                            <option value="affidavit">Affidavit - $25</option>
+                            <option value="power-of-attorney">Power of Attorney - $35</option>
+                            <option value="real-estate">Real Estate Documents - $45</option>
+                            <option value="business">Business Documents - $30</option>
+                            <option value="personal">Personal Documents - $25</option>
+                            <option value="financial">Financial Documents - $40</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentDate">Preferred Date *</label>
+                        <input type="date" id="appointmentDate" name="appointmentDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="appointmentTime">Available Time Slots *</label>
+                        <div id="timeSlots" class="time-slots">
+                            <!-- Time slots will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="specialRequests">Special Requests or Notes</label>
+                        <textarea id="specialRequests" name="specialRequests" rows="3" placeholder="Any special requirements or additional information..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeBookingModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Schedule Appointment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <footer>
         <div class="container">
