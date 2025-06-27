@@ -226,7 +226,7 @@ header.scrolled {
 
 /* How It Works Section */
 .how-it-works {
-    padding: 100px 0;
+    padding: 100px 0 120px 0;
     background: linear-gradient(135deg, #f8f8f8 0%, #ffffff 100%);
     position: relative;
     overflow: hidden;
@@ -289,7 +289,7 @@ header.scrolled {
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(184, 134, 11, 0.1), transparent);
-    animation: slideShimmer 3.5s infinite;
+    animation: slideShimmer 5s infinite;
     z-index: 1;
     pointer-events: none;
 }
@@ -302,7 +302,7 @@ header.scrolled {
 
 .slider-track {
     display: flex;
-    transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     min-height: 300px;
     width: 300%; /* Show all slides in a continuous track */
 }
@@ -399,8 +399,8 @@ header.scrolled {
     width: 33.333%;
     background: linear-gradient(90deg, #B8860B, #DAA520);
     border-radius: 2px;
-    transition: transform 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    animation: progressPulse 3.5s infinite;
+    transition: transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    animation: progressPulse 5s infinite;
     transform: translateX(var(--progress-position, 0%));
 }
 
@@ -414,6 +414,9 @@ header.scrolled {
     justify-content: center;
     gap: 1rem;
     margin-top: 2rem;
+    padding-bottom: 1rem;
+    min-height: 40px;
+    align-items: center;
 }
 
 .dot {
@@ -430,7 +433,7 @@ header.scrolled {
     background: #B8860B;
     transform: scale(1.3);
     border-color: rgba(184, 134, 11, 0.3);
-    box-shadow: 0 0 0 4px rgba(184, 134, 11, 0.2);
+    box-shadow: 0 0 0 6px rgba(184, 134, 11, 0.2);
 }
 
 .dot:hover {
@@ -950,6 +953,10 @@ footer:hover p {
         padding-right: 15px;
     }
     
+    .how-it-works {
+        padding: 80px 15px 100px 15px;
+    }
+    
     .services h2, .faq h2, .about h2, .contact h2, .how-it-works h2 {
         font-size: 1.8rem;
     }
@@ -988,6 +995,12 @@ footer:hover p {
     
     .step-icon {
         font-size: 3rem;
+    }
+    
+    .slider-dots {
+        margin-top: 2rem;
+        padding-bottom: 1.5rem;
+        min-height: 45px;
     }
     
     .faq-question {

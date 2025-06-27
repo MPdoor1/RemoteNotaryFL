@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function startAutoSlide() {
-        slideInterval = setInterval(nextSlide, 3500); // Slightly faster for more obvious movement
+        slideInterval = setInterval(nextSlide, 5000); // Slower, more comfortable timing
     }
     
     // Handle window resize to recalculate positions
