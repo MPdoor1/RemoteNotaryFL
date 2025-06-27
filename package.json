@@ -1,14 +1,14 @@
 {
-  "name": "remote-notary-fl",
+  "name": "remote-notary-services",
   "version": "1.0.0",
-  "description": "Remote Notary FL Web Application",
+  "description": "Remote Notary Services Web Application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
     "test": "echo \"No tests specified\""
   },
-  "keywords": ["notary", "florida", "remote"],
+  "keywords": ["notary", "remote", "nationwide", "online"],
   "author": "",
   "license": "ISC",
   "dependencies": {

@@ -21,7 +21,7 @@ document.querySelector('.cta-button').addEventListener('click', function() {
     }, 150);
     
     setTimeout(() => {
-        alert('Welcome to Remote Notary FL! Contact us to get started with your professional notarization services.');
+        alert('Welcome to Remote Notary Services! Contact us to get started with your professional notarization services nationwide.');
     }, 200);
 });
 
@@ -104,4 +104,26 @@ window.addEventListener('scroll', function() {
     const goldIntensity = Math.min(scrollPercent / 2, 30);
     
     document.documentElement.style.setProperty('--scroll-gold', `hsla(43, 74%, ${45 + goldIntensity}%, 0.1)`);
+});
+
+// FAQ Accordion functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    
+    faqQuestions.forEach(question => {
+        question.addEventListener('click', function() {
+            const faqItem = this.parentElement;
+            const isActive = faqItem.classList.contains('active');
+            
+            // Close all other FAQ items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Toggle current item
+            if (!isActive) {
+                faqItem.classList.add('active');
+            }
+        });
+    });
 }); 

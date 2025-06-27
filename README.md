@@ -1,6 +1,6 @@
-# Remote Notary FL
+# Remote Notary Services
 
-A professional web application for remote notary services in Florida.
+A professional web application for remote notary services nationwide.
 
 ## Features
 
