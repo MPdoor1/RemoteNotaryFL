@@ -21,8 +21,7 @@ const EMAILJS_SERVICE_ID = 'service_notary'; // Replace with your EmailJS servic
 const EMAILJS_TEMPLATE_ID = 'template_booking_confirmation'; // Replace with your template ID
 
 // Stripe Configuration
-// TODO: Replace with your actual Stripe publishable key
-const stripe = Stripe('pk_test_51ABC123...'); // Replace with your actual publishable key
+const stripe = Stripe('pk_live_51RknYjGpt03TMvPV64qnnRVkH5GHluzHm6JINV4wFsdWkC5ur0ccsBN37JVA7LkLfmBOPe1Ts43mxxQ66VXxEwLY004cVijecC');
 const elements = stripe.elements();
 let cardElement = null;
 
