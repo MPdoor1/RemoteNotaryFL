@@ -47,6 +47,12 @@ const serviceOptions = {
         price: 200,
         productId: 'prod_SgABkZ7XWvSiYa',
         description: 'Comprehensive document signing and notarization service'
+    },
+    'test': {
+        name: 'Test Service',
+        price: 5,
+        productId: 'prod_SgAlAcYiNHhPSC',
+        description: 'Test service for email and proof link verification'
     }
 };
 
