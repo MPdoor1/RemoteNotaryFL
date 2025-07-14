@@ -35,6 +35,14 @@ const createProofNotarization = async (bookingData) => {
     const firstName = nameParts[0] || 'Customer';
     const lastName = nameParts.slice(1).join(' ') || 'User';
     
+    // Parse the appointment date and time to create ISO date for activation
+    const appointmentDateTime = new Date(`${bookingData.appointment_date} ${bookingData.appointment_time}`);
+    const activationTime = appointmentDateTime.toISOString();
+    
+    // Set expiration to 2 hours after appointment time
+    const expirationDateTime = new Date(appointmentDateTime.getTime() + (2 * 60 * 60 * 1000));
+    const expirationTime = expirationDateTime.toISOString();
+
     const transactionData = {
       signers: [
         {
@@ -52,8 +60,10 @@ const createProofNotarization = async (bookingData) => {
       transaction_name: `${bookingData.service_name} - ${bookingData.booking_id}`,
       external_id: bookingData.booking_id,
       require_secondary_photo_id: true, // Enhanced ID verification for notarization
-      message_to_signer: `Your ${bookingData.service_name} appointment is scheduled for ${bookingData.appointment_date} at ${bookingData.appointment_time}. This will be a live video meeting with a notary. Please have your documents ready and ensure you have a stable internet connection.`,
-      message_signature: "Remote Notary FL Team"
+      activation_time: activationTime, // When the meeting becomes available
+      expiration_time: expirationTime, // When the meeting expires
+      message_to_signer: `Your live notary appointment is scheduled for ${bookingData.appointment_date} at ${bookingData.appointment_time}. You will meet with a licensed notary via video call. Please have your valid government-issued photo ID and documents ready. The meeting link will become active 15 minutes before your scheduled time.`,
+      message_signature: "Remote Notary FL - Licensed Notary Services"
     };
 
     console.log('Proof transaction data:', JSON.stringify(transactionData, null, 2));
@@ -102,14 +112,19 @@ const getProofMeetingLink = async (transactionId) => {
 // Email templates
 const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusinessCopy = false) => {
   const meetingLinkSection = meetingLink ? `
-    <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-      <h3 style="color: #2e7d32; margin-top: 0;">🔗 YOUR MEETING LINK</h3>
-      <a href="${meetingLink}" style="display: inline-block; background: #4caf50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Join Your Appointment</a>
-      <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">
-        Save this link - you'll use it for your appointment:<br>
-        <code style="background: #f5f5f5; padding: 5px; border-radius: 3px; word-break: break-all;">${meetingLink}</code>
-      </p>
-    </div>
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+          <h3 style="color: #2e7d32; margin-top: 0;">🎥 LIVE NOTARY MEETING LINK</h3>
+          <div style="background: #fff; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #4caf50;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #2e7d32;">⏰ Meeting becomes active 15 minutes before your appointment time</p>
+            <p style="margin: 0 0 15px 0; font-size: 14px; color: #666;">
+              <strong>Scheduled:</strong> ${bookingData.appointment_date} at ${bookingData.appointment_time}
+            </p>
+            <a href="${meetingLink}" style="display: inline-block; background: #4caf50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Join Live Notary Meeting</a>
+          </div>
+          <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+            Meeting Link: <code style="background: #f5f5f5; padding: 3px; border-radius: 3px; word-break: break-all;">${meetingLink}</code>
+          </p>
+        </div>
   ` : '';
 
   const recipient = isBusinessCopy ? 'RemoteNotaryFL@gmail.com' : bookingData.email;
@@ -147,21 +162,27 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
         ${meetingLinkSection}
         
         <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #1976d2; margin-top: 0;">📋 WHAT TO PREPARE</h3>
+          <h3 style="color: #1976d2; margin-top: 0;">📋 LIVE MEETING PREPARATION</h3>
           <ul>
-            <li>Valid government-issued photo ID</li>
-            <li>Documents to be ${bookingData.service_type === 'notarization' ? 'notarized' : 'signed'}</li>
-            <li>Stable internet connection</li>
-            <li>Computer/device with camera and microphone</li>
+            <li><strong>Valid government-issued photo ID</strong> (driver's license, passport, etc.)</li>
+            <li><strong>Secondary photo ID</strong> (required for enhanced verification)</li>
+            <li><strong>Original documents</strong> to be notarized (physical copies)</li>
+            <li><strong>Stable internet connection</strong> for video quality</li>
+            <li><strong>Computer/device with working camera and microphone</strong></li>
+            <li><strong>Quiet, well-lit environment</strong> for the video call</li>
+            <li><strong>Be prepared to show documents clearly</strong> to the camera</li>
           </ul>
         </div>
         
         <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #7b1fa2; margin-top: 0;">📱 IMPORTANT NOTES</h3>
+          <h3 style="color: #7b1fa2; margin-top: 0;">🎥 LIVE NOTARY MEETING DETAILS</h3>
           <ul>
-            <li>✅ Payment of $${bookingData.price} has been processed successfully</li>
-            <li>🔗 ${meetingLink ? 'Your meeting link is ready above' : 'Meeting link will be sent 24 hours before your appointment'}</li>
-            <li>⏰ Please join 5 minutes early</li>
+            <li>✅ <strong>Payment of $${bookingData.price} has been processed successfully</strong></li>
+            <li>🎥 <strong>This is a LIVE video meeting with a licensed notary</strong></li>
+            <li>🔗 ${meetingLink ? 'Your meeting link is ready above - becomes active 15 minutes before appointment' : 'Meeting link will be sent 24 hours before your appointment'}</li>
+            <li>⏰ <strong>Please join 5 minutes early for technical checks</strong></li>
+            <li>🆔 <strong>Have both photo IDs ready to show on camera</strong></li>
+            <li>📄 <strong>Original documents must be physically present</strong></li>
             <li>📱 A reminder will be sent 1 hour before your session</li>
           </ul>
         </div>
