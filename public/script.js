@@ -34,14 +34,20 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeStripeElements();
 });
 
-// Pricing for different document types
-const documentPricing = {
-    'affidavit': 25,
-    'power-of-attorney': 35,
-    'real-estate': 45,
-    'business': 30,
-    'personal': 25,
-    'financial': 40
+// Service options with Stripe product IDs and pricing
+const serviceOptions = {
+    'notarization': {
+        name: 'Notarization Service',
+        price: 50,
+        productId: 'prod_SgACWbsnIVSura',
+        description: 'Professional remote notarization with identity verification'
+    },
+    'signing': {
+        name: 'Document Signing Service', 
+        price: 200,
+        productId: 'prod_SgABkZ7XWvSiYa',
+        description: 'Comprehensive document signing and notarization service'
+    }
 };
 
 // Stripe Elements initialization
@@ -76,11 +82,11 @@ function initializeStripeElements() {
 }
 
 function updatePaymentAmount() {
-    const documentType = document.getElementById('documentType').value;
+    const serviceType = document.getElementById('serviceType').value;
     const paymentAmount = document.getElementById('paymentAmount');
     
-    if (documentType && documentPricing[documentType]) {
-        paymentAmount.textContent = documentPricing[documentType];
+    if (serviceType && serviceOptions[serviceType]) {
+        paymentAmount.textContent = serviceOptions[serviceType].price;
     } else {
         paymentAmount.textContent = '0';
     }
@@ -97,6 +103,8 @@ async function processStripePayment(booking) {
             },
             body: JSON.stringify({
                 amount: booking.price,
+                product_id: booking.productId,
+                service_name: booking.serviceName,
                 booking_id: booking.id
             })
         });
@@ -144,7 +152,9 @@ async function processStripePayment(booking) {
                             day: 'numeric'
                         }),
                         appointment_time: booking.timeDisplay,
-                        document_type: booking.documentType.replace('-', ' ').toUpperCase(),
+                        service_type: booking.serviceType,
+                        service_name: booking.serviceName,
+                        product_id: booking.productId,
                         price: booking.price,
                         special_requests: booking.specialRequests || 'None'
                     }
@@ -202,10 +212,10 @@ function openBookingModal() {
     // Initialize Stripe Elements if not already done
     initializeStripeElements();
     
-    // Set up document type change listener
-    const documentTypeSelect = document.getElementById('documentType');
-    if (documentTypeSelect) {
-        documentTypeSelect.addEventListener('change', updatePaymentAmount);
+    // Set up service type change listener
+    const serviceTypeSelect = document.getElementById('serviceType');
+    if (serviceTypeSelect) {
+        serviceTypeSelect.addEventListener('change', updatePaymentAmount);
     }
 }
 
@@ -284,7 +294,8 @@ async function sendBookingConfirmationEmail(booking) {
             day: 'numeric'
         }),
         appointment_time: booking.timeDisplay,
-        document_type: booking.documentType.replace('-', ' ').toUpperCase(),
+        service_type: booking.serviceType,
+        service_name: booking.serviceName || booking.serviceType,
         price: booking.price,
         phone: booking.phone,
         special_requests: booking.specialRequests || 'None'
@@ -370,7 +381,8 @@ function sendReminderEmail(booking) {
             day: 'numeric'
         }),
         appointment_time: booking.timeDisplay,
-        document_type: booking.documentType.replace('-', ' ').toUpperCase(),
+        service_type: booking.serviceType,
+        service_name: booking.serviceName || booking.serviceType,
         hours_until: calculateHoursUntilAppointment(booking)
     };
     
@@ -397,8 +409,8 @@ async function showBookingConfirmation(booking) {
             
             📅 Date: ${emailData.appointment_date}
             ⏰ Time: ${emailData.appointment_time}
-            📋 Document: ${emailData.document_type}
-            💰 Price: $${emailData.price}
+            📋 Service: ${emailData.service_name}
+            💰 Price: $${emailData.price} (PAID)
             
             📧 Confirmation email sent to: ${booking.email}
             📱 Meeting link will be sent 24 hours before appointment
@@ -480,17 +492,22 @@ document.addEventListener('DOMContentLoaded', function() {
             submitButton.textContent = 'Processing Payment...';
             
             try {
+                const serviceType = formData.get('serviceType');
+                const selectedService = serviceOptions[serviceType];
+                
                 const booking = {
                     id: Date.now().toString(),
                     name: formData.get('clientName'),
                     email: formData.get('clientEmail'),
                     phone: formData.get('clientPhone'),
-                    documentType: formData.get('documentType'),
+                    serviceType: serviceType,
+                    serviceName: selectedService.name,
+                    productId: selectedService.productId,
                     date: formData.get('appointmentDate'),
                     time: selectedTimeSlot.dataset.time,
                     timeDisplay: selectedTimeSlot.textContent.trim(),
                     specialRequests: formData.get('specialRequests'),
-                    price: documentPricing[formData.get('documentType')],
+                    price: selectedService.price,
                     status: 'scheduled',
                     createdAt: new Date().toISOString()
                 };
@@ -588,7 +605,7 @@ function displayRecentBookings() {
     
     bookingsList.innerHTML = sortedBookings.map(booking => `
         <div class="booking-item">
-            <h4>${booking.name} - ${booking.documentType.replace('-', ' ').toUpperCase()}</h4>
+            <h4>${booking.name} - ${booking.serviceName || booking.serviceType || 'Service'}</h4>
             <p><strong>Date:</strong> ${new Date(booking.date).toLocaleDateString()} at ${booking.timeDisplay}</p>
             <p><strong>Email:</strong> ${booking.email} | <strong>Phone:</strong> ${booking.phone}</p>
             <p><strong>Price:</strong> $${booking.price} | <strong>Status:</strong> ${booking.status}</p>
@@ -614,11 +631,12 @@ function sendTestConfirmationEmail() {
         name: 'Test User',
         email: testEmail,
         phone: '(555) 123-4567',
-        documentType: 'affidavit',
+        serviceType: 'notarization',
+        serviceName: 'Notarization Service',
         date: new Date().toISOString().split('T')[0],
         time: '14:00',
         timeDisplay: '2:00 PM',
-        price: 25,
+        price: 50,
         specialRequests: 'This is a test booking'
     };
     
@@ -637,7 +655,8 @@ function sendTestMeetingLink() {
         id: 'TEST-' + Date.now(),
         name: 'Test User',
         email: testEmail,
-        documentType: 'affidavit',
+        serviceType: 'notarization',
+        serviceName: 'Notarization Service',
         date: new Date().toISOString().split('T')[0],
         time: '14:00',
         timeDisplay: '2:00 PM'
@@ -659,7 +678,8 @@ function sendTestReminder() {
         id: 'TEST-' + Date.now(),
         name: 'Test User',
         email: testEmail,
-        documentType: 'affidavit',
+        serviceType: 'notarization',
+        serviceName: 'Notarization Service',
         date: new Date().toISOString().split('T')[0],
         time: '14:00',
         timeDisplay: '2:00 PM'
@@ -694,7 +714,8 @@ async function sendMeetingLinkToBooking(bookingId) {
                         day: 'numeric'
                     }),
                     appointment_time: booking.timeDisplay,
-                    document_type: booking.documentType.replace('-', ' ').toUpperCase()
+                    service_type: booking.serviceType,
+                    service_name: booking.serviceName || booking.serviceType
                 },
                 transactionId: booking.proofTransactionId || null
             })
@@ -742,9 +763,9 @@ function exportBookings() {
     }
     
     const csvContent = "data:text/csv;charset=utf-8," 
-        + "ID,Name,Email,Phone,Document Type,Date,Time,Price,Status,Created At,Special Requests\n"
+        + "ID,Name,Email,Phone,Service Type,Service Name,Date,Time,Price,Status,Created At,Special Requests\n"
         + bookings.map(booking => 
-            `${booking.id},"${booking.name}","${booking.email}","${booking.phone}","${booking.documentType}","${booking.date}","${booking.timeDisplay}","$${booking.price}","${booking.status}","${booking.createdAt}","${booking.specialRequests || ''}"`
+            `${booking.id},"${booking.name}","${booking.email}","${booking.phone}","${booking.serviceType || booking.documentType || 'Unknown'}","${booking.serviceName || booking.serviceType || booking.documentType || 'Unknown'}","${booking.date}","${booking.timeDisplay}","$${booking.price}","${booking.status}","${booking.createdAt}","${booking.specialRequests || ''}"`
         ).join("\n");
     
     const encodedUri = encodeURI(csvContent);

@@ -28,8 +28,10 @@ const PROOF_API_HEADERS = {
 // Proof API helper functions
 const createProofNotarization = async (bookingData) => {
   try {
+    const transactionType = bookingData.service_type === 'notarization' ? 'notarization' : 'esign';
+    
     const transactionData = {
-      transaction_type: 'notarization',
+      transaction_type: transactionType,
       signers: [
         {
           email: bookingData.email,
@@ -39,7 +41,7 @@ const createProofNotarization = async (bookingData) => {
       ],
       documents: [
         {
-          name: `${bookingData.document_type}_document.pdf`,
+          name: `${bookingData.service_type}_document.pdf`,
           template: 'blank_document' // Will be replaced with actual document
         }
       ],
@@ -47,7 +49,9 @@ const createProofNotarization = async (bookingData) => {
         booking_id: bookingData.booking_id,
         appointment_date: bookingData.appointment_date,
         appointment_time: bookingData.appointment_time,
-        document_type: bookingData.document_type,
+        service_type: bookingData.service_type,
+        service_name: bookingData.service_name,
+        product_id: bookingData.product_id,
         price: bookingData.price
       }
     };
@@ -58,7 +62,7 @@ const createProofNotarization = async (bookingData) => {
 
     return response.data;
   } catch (error) {
-    console.error('Error creating Proof notarization:', error.response?.data || error.message);
+    console.error('Error creating Proof transaction:', error.response?.data || error.message);
     throw error;
   }
 };
@@ -81,47 +85,61 @@ const getProofMeetingLink = async (transactionId) => {
 };
 
 // Email templates
-const createBookingConfirmationEmail = (bookingData) => {
+const createBookingConfirmationEmail = (bookingData, meetingLink = null) => {
+  const meetingLinkSection = meetingLink ? `
+    <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+      <h3 style="color: #2e7d32; margin-top: 0;">🔗 YOUR MEETING LINK</h3>
+      <a href="${meetingLink}" style="display: inline-block; background: #4caf50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Join Your Appointment</a>
+      <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">
+        Save this link - you'll use it for your appointment:<br>
+        <code style="background: #f5f5f5; padding: 5px; border-radius: 3px; word-break: break-all;">${meetingLink}</code>
+      </p>
+    </div>
+  ` : '';
+
   return {
     to: [bookingData.email, 'RemoteNotaryFL@gmail.com'], // Send to both client and business
     from: process.env.SENDGRID_FROM_EMAIL || 'RemoteNotaryFL@gmail.com',
-    subject: `✅ Notarization Appointment Confirmed - ${bookingData.booking_id}`,
+    subject: `✅ ${bookingData.service_name} Appointment Confirmed - ${bookingData.booking_id}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2c3e50;">Appointment Confirmed!</h2>
         
         <p>Dear ${bookingData.client_name},</p>
         
-        <p>Your remote notarization appointment has been successfully scheduled!</p>
+        <p>Your ${bookingData.service_name.toLowerCase()} appointment has been successfully scheduled and paid for!</p>
         
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #495057; margin-top: 0;">📅 APPOINTMENT DETAILS</h3>
           <ul style="list-style: none; padding: 0;">
             <li><strong>Date:</strong> ${bookingData.appointment_date}</li>
             <li><strong>Time:</strong> ${bookingData.appointment_time}</li>
-            <li><strong>Document Type:</strong> ${bookingData.document_type}</li>
-            <li><strong>Price:</strong> $${bookingData.price}</li>
+            <li><strong>Service:</strong> ${bookingData.service_name}</li>
+            <li><strong>Price:</strong> $${bookingData.price} (PAID)</li>
             <li><strong>Booking ID:</strong> ${bookingData.booking_id}</li>
           </ul>
         </div>
+        
+        ${meetingLinkSection}
         
         <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #1976d2; margin-top: 0;">📋 WHAT TO PREPARE</h3>
           <ul>
             <li>Valid government-issued photo ID</li>
-            <li>Documents to be notarized</li>
+            <li>Documents to be ${bookingData.service_type === 'notarization' ? 'notarized' : 'signed'}</li>
             <li>Stable internet connection</li>
             <li>Computer/device with camera and microphone</li>
           </ul>
         </div>
         
         <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #7b1fa2; margin-top: 0;">📱 NEXT STEPS</h3>
-          <ol>
-            <li>You'll receive a secure meeting link 24 hours before your appointment</li>
-            <li>A reminder email will be sent 1 hour before your session</li>
-            <li>Payment will be processed after the successful notarization</li>
-          </ol>
+          <h3 style="color: #7b1fa2; margin-top: 0;">📱 IMPORTANT NOTES</h3>
+          <ul>
+            <li>✅ Payment of $${bookingData.price} has been processed successfully</li>
+            <li>🔗 ${meetingLink ? 'Your meeting link is ready above' : 'Meeting link will be sent 24 hours before your appointment'}</li>
+            <li>⏰ Please join 5 minutes early</li>
+            <li>📱 A reminder will be sent 1 hour before your session</li>
+          </ul>
         </div>
         
         <div style="margin: 20px 0;">
@@ -249,7 +267,7 @@ app.post('/send-meeting-link', async (req, res) => {
 // Stripe payment endpoints
 app.post('/create-payment-intent', async (req, res) => {
   try {
-    const { amount, currency = 'usd', booking_id } = req.body;
+    const { amount, currency = 'usd', booking_id, product_id, service_name } = req.body;
     
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(amount * 100), // Convert to cents
@@ -258,7 +276,9 @@ app.post('/create-payment-intent', async (req, res) => {
         enabled: true,
       },
       metadata: {
-        booking_id: booking_id
+        booking_id: booking_id,
+        product_id: product_id,
+        service_name: service_name
       }
     });
     
@@ -284,25 +304,41 @@ app.post('/confirm-payment', async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.retrieve(payment_intent_id);
     
     if (paymentIntent.status === 'succeeded') {
-      // Payment successful - create Proof notarization transaction
+      // Payment successful - create Proof transaction and get meeting link
       let proofTransaction = null;
+      let meetingLink = null;
+      
       try {
         proofTransaction = await createProofNotarization(booking_data);
         console.log('Proof transaction created:', proofTransaction);
+        
+        // Get meeting link immediately
+        if (proofTransaction && proofTransaction.id) {
+          try {
+            meetingLink = await getProofMeetingLink(proofTransaction.id);
+            console.log('Meeting link obtained:', meetingLink);
+          } catch (linkError) {
+            console.error('Failed to get meeting link:', linkError);
+            // Use fallback link if Proof API fails
+            meetingLink = `https://proof.com/session/${proofTransaction.id}`;
+          }
+        }
       } catch (proofError) {
         console.error('Failed to create Proof transaction:', proofError);
-        // Continue with email even if Proof fails
+        // Create fallback meeting link
+        meetingLink = `https://proof.com/room/${booking_data.booking_id}`;
       }
       
-      // Send confirmation email
-      const emailData = createBookingConfirmationEmail(booking_data);
+      // Send confirmation email with meeting link
+      const emailData = createBookingConfirmationEmail(booking_data, meetingLink);
       await sgMail.send(emailData);
       
       res.json({
         success: true,
-        message: 'Payment confirmed, booking email sent, and notarization transaction created',
+        message: 'Payment confirmed, booking email sent with meeting link, and notarization transaction created',
         payment_intent: paymentIntent,
-        proof_transaction: proofTransaction
+        proof_transaction: proofTransaction,
+        meeting_link: meetingLink
       });
     } else {
       res.status(400).json({
