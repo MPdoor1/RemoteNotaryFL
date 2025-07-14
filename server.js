@@ -83,7 +83,7 @@ IMPORTANT: You must upload your documents before the meeting. Use the link provi
 
 You will meet with a licensed notary via video call. Please have your valid government-issued photo ID ready. The meeting link will become active 15 minutes before your scheduled time.
 
-For technical support, contact RemoteNotaryFL@gmail.com`,
+For technical support, contact remotenotaryfl@remotenotaryfl.com`,
       message_signature: "Remote Notary FL - Licensed Notary Services"
     };
 
@@ -149,13 +149,13 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
         </div>
   ` : '';
 
-  const recipient = isBusinessCopy ? 'RemoteNotaryFL@gmail.com' : bookingData.email;
+  const recipient = isBusinessCopy ? 'remotenotaryfl@remotenotaryfl.com' : bookingData.email;
   const subjectPrefix = isBusinessCopy ? '[BUSINESS COPY] ' : '';
 
   return {
     to: recipient,
-    from: process.env.SENDGRID_FROM_EMAIL || 'RemoteNotaryFL@gmail.com',
-    replyTo: 'RemoteNotaryFL@gmail.com',
+    from: process.env.SENDGRID_FROM_EMAIL || 'remotenotaryfl@remotenotaryfl.com',
+    replyTo: 'remotenotaryfl@remotenotaryfl.com',
     subject: `${subjectPrefix}✅ ${bookingData.service_name} Appointment Confirmed - ${bookingData.booking_id}`,
     headers: {
       'X-Priority': '1',
@@ -233,8 +233,8 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
 
 const createMeetingLinkEmail = (bookingData, meetingLink) => {
   return {
-    to: [bookingData.email, 'RemoteNotaryFL@gmail.com'], // Send to both client and business
-    from: process.env.SENDGRID_FROM_EMAIL || 'RemoteNotaryFL@gmail.com',
+    to: [bookingData.email, 'remotenotaryfl@remotenotaryfl.com'], // Send to both client and business
+    from: process.env.SENDGRID_FROM_EMAIL || 'remotenotaryfl@remotenotaryfl.com',
     subject: `🔗 Your Notarization Meeting Link - ${bookingData.booking_id}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
