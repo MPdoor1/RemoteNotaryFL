@@ -481,6 +481,20 @@ document.addEventListener('DOMContentLoaded', function() {
         dateInput.addEventListener('change', generateTimeSlots);
     }
     
+    // Function to validate multiple email addresses
+    function validateEmails(emailString) {
+        const emails = emailString.split(/[,\n]/).map(email => email.trim()).filter(email => email.length > 0);
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        for (const email of emails) {
+            if (!emailRegex.test(email)) {
+                return { valid: false, invalidEmail: email };
+            }
+        }
+        
+        return { valid: true, emails: emails };
+    }
+    
     if (form) {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -492,6 +506,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Please select a time slot');
                 return;
             }
+            
+            // Validate email addresses
+            const emailValidation = validateEmails(formData.get('clientEmail'));
+            if (!emailValidation.valid) {
+                alert(`Invalid email address: ${emailValidation.invalidEmail}`);
+                return;
+            }
+            
+            console.log(`Validated ${emailValidation.emails.length} email address(es):`, emailValidation.emails);
             
             const submitButton = document.getElementById('submitPayment');
             submitButton.disabled = true;

@@ -26,6 +26,14 @@ const PROOF_API_HEADERS = {
 };
 
 // Proof API helper functions
+// Function to parse multiple email addresses
+const parseEmailAddresses = (emailString) => {
+  return emailString
+    .split(/[,\n]/)
+    .map(email => email.trim())
+    .filter(email => email.length > 0);
+};
+
 const createProofNotarization = async (bookingData) => {
   try {
     console.log('Creating Proof transaction with API key:', process.env.PROOF_API_KEY ? 'API key present' : 'NO API KEY');
@@ -35,6 +43,10 @@ const createProofNotarization = async (bookingData) => {
     const firstName = nameParts[0] || 'Customer';
     const lastName = nameParts.slice(1).join(' ') || 'User';
     
+    // Parse multiple email addresses
+    const emails = parseEmailAddresses(bookingData.email);
+    console.log('Parsed email addresses:', emails);
+    
     // Parse the appointment date and time to create ISO date for activation
     const appointmentDateTime = new Date(`${bookingData.appointment_date} ${bookingData.appointment_time}`);
     const activationTime = appointmentDateTime.toISOString();
@@ -43,14 +55,15 @@ const createProofNotarization = async (bookingData) => {
     const expirationDateTime = new Date(appointmentDateTime.getTime() + (2 * 60 * 60 * 1000));
     const expirationTime = expirationDateTime.toISOString();
 
+    // Create signers for each email address
+    const signers = emails.map((email, index) => ({
+      email: email,
+      first_name: index === 0 ? firstName : `${firstName} (${index + 1})`,
+      last_name: lastName
+    }));
+
     const transactionData = {
-      signers: [
-        {
-          email: bookingData.email,
-          first_name: firstName,
-          last_name: lastName
-        }
-      ],
+      signers: signers,
       documents: [
         {
           resource: "https://static.notarize.com/Example.pdf",
@@ -171,9 +184,10 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
         ${meetingLinkSection}
         
         <div style="background: #fff3e0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff9800;">
-          <h3 style="color: #f57c00; margin-top: 0;">📄 STEP 1: UPLOAD YOUR DOCUMENTS</h3>
-          <p><strong>You will receive a separate email from Proof.com with instructions to upload your documents.</strong></p>
-          <p>Please upload the documents you need notarized before your appointment time.</p>
+          <h3 style="color: #f57c00; margin-top: 0;">📄 DOCUMENT UPLOAD PROCESS</h3>
+          <p><strong>You will receive a separate email from Proof.com with a link to the meeting platform.</strong></p>
+          <p><strong>IMPORTANT:</strong> The system may show a "test document" as a placeholder - this is normal. <strong>During your live meeting, you will upload the actual documents you need notarized.</strong></p>
+          <p>Simply follow the steps provided in the Proof.com email to access your meeting room when it's time for your appointment.</p>
         </div>
         
         <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -396,9 +410,16 @@ app.post('/confirm-payment', async (req, res) => {
         console.log('Using fallback meeting link:', meetingLink);
       }
       
-      // Send booking confirmation with meeting link to client
-      const clientEmailData = createBookingConfirmationEmail(booking_data, meetingLink, false);
-      await sgMail.send(clientEmailData);
+      // Parse multiple email addresses and send to all participants
+      const emails = parseEmailAddresses(booking_data.email);
+      
+      // Send booking confirmation with meeting link to all participants
+      for (const email of emails) {
+        const participantBookingData = { ...booking_data, email: email };
+        const clientEmailData = createBookingConfirmationEmail(participantBookingData, meetingLink, false);
+        await sgMail.send(clientEmailData);
+        console.log(`Confirmation email sent to: ${email}`);
+      }
       
       // Send copy to business
       const businessEmailData = createBookingConfirmationEmail(booking_data, meetingLink, true);
