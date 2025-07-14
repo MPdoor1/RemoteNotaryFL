@@ -286,8 +286,13 @@
                     
                     <div class="form-group">
                         <label for="clientEmail">Email Address(es) *</label>
-                        <textarea id="clientEmail" name="clientEmail" rows="3" placeholder="Enter email addresses separated by commas or new lines. Multiple people can join the meeting and receive notifications." required></textarea>
-                        <small style="color: #666; font-size: 12px;">You can enter multiple email addresses separated by commas or new lines. All participants will receive meeting invitations and notifications.</small>
+                        <div id="emailContainer">
+                            <div class="email-input-group">
+                                <input type="email" id="clientEmail" name="clientEmail" placeholder="Primary email address" required>
+                                <button type="button" id="addEmailBtn" class="add-email-btn">+ Add Email</button>
+                            </div>
+                        </div>
+                        <small style="color: #666; font-size: 12px;">The first email is used for payment billing. All emails will receive meeting invitations and notifications.</small>
                     </div>
                     
                     <div class="form-group">

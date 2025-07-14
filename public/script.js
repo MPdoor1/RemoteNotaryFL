@@ -148,7 +148,7 @@ async function processStripePayment(booking) {
                     payment_intent_id: paymentIntent.id,
                     booking_data: {
                         client_name: booking.name,
-                        email: booking.email,
+                        email: booking.allEmails, // Send all emails to server
                         phone: booking.phone,
                         booking_id: booking.id,
                         appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
@@ -481,19 +481,78 @@ document.addEventListener('DOMContentLoaded', function() {
         dateInput.addEventListener('change', generateTimeSlots);
     }
     
-    // Function to validate multiple email addresses
-    function validateEmails(emailString) {
-        const emails = emailString.split(/[,\n]/).map(email => email.trim()).filter(email => email.length > 0);
+    // Email management functions (made global for onclick handlers)
+    window.emailCount = 1;
+    
+    window.addEmailInput = function() {
+        window.emailCount++;
+        const emailContainer = document.getElementById('emailContainer');
+        
+        const emailGroup = document.createElement('div');
+        emailGroup.className = 'email-input-group';
+        emailGroup.innerHTML = `
+            <input type="email" name="additionalEmail${window.emailCount}" placeholder="Additional email address" required>
+            <button type="button" class="remove-email-btn" onclick="removeEmailInput(this)">Remove</button>
+        `;
+        
+        emailContainer.appendChild(emailGroup);
+    }
+    
+    window.removeEmailInput = function(button) {
+        const emailGroup = button.parentElement;
+        emailGroup.remove();
+    }
+    
+    // Function to collect all email addresses from the form
+    function collectAllEmails() {
+        const emails = [];
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         
+        // Get primary email
+        const primaryEmail = document.getElementById('clientEmail').value.trim();
+        if (primaryEmail && emailRegex.test(primaryEmail)) {
+            emails.push(primaryEmail);
+        }
+        
+        // Get additional emails
+        const additionalEmailInputs = document.querySelectorAll('input[name^="additionalEmail"]');
+        additionalEmailInputs.forEach(input => {
+            const email = input.value.trim();
+            if (email && emailRegex.test(email)) {
+                emails.push(email);
+            }
+        });
+        
+        return emails;
+    }
+    
+    // Function to validate all email addresses
+    function validateAllEmails() {
+        const emails = collectAllEmails();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (emails.length === 0) {
+            return { valid: false, message: 'At least one email address is required' };
+        }
+        
+        // Check for duplicates
+        const uniqueEmails = [...new Set(emails)];
+        if (uniqueEmails.length !== emails.length) {
+            return { valid: false, message: 'Duplicate email addresses found' };
+        }
+        
+        // Validate each email
         for (const email of emails) {
             if (!emailRegex.test(email)) {
-                return { valid: false, invalidEmail: email };
+                return { valid: false, message: `Invalid email address: ${email}` };
             }
         }
         
         return { valid: true, emails: emails };
     }
+    
+    // Add event listener for the "Add Email" button
+    document.getElementById('addEmailBtn').addEventListener('click', window.addEmailInput);
     
     if (form) {
         form.addEventListener('submit', async function(e) {
@@ -508,9 +567,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Validate email addresses
-            const emailValidation = validateEmails(formData.get('clientEmail'));
+            const emailValidation = validateAllEmails();
             if (!emailValidation.valid) {
-                alert(`Invalid email address: ${emailValidation.invalidEmail}`);
+                alert(emailValidation.message);
                 return;
             }
             
@@ -524,10 +583,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const serviceType = formData.get('serviceType');
                 const selectedService = serviceOptions[serviceType];
                 
+                const allEmails = emailValidation.emails;
+                const primaryEmail = allEmails[0]; // Use first email for billing
+                
                 const booking = {
                     id: Date.now().toString(),
                     name: formData.get('clientName'),
-                    email: formData.get('clientEmail'),
+                    email: primaryEmail, // Primary email for Stripe billing
+                    allEmails: allEmails.join(','), // All emails for server processing
                     phone: formData.get('clientPhone'),
                     serviceType: serviceType,
                     serviceName: selectedService.name,
