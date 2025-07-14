@@ -1406,4 +1406,54 @@ footer:hover p {
     .faq-question h3 {
         font-size: 1rem;
     }
+}
+
+/* Stripe Payment Styles */
+.stripe-card-element {
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.stripe-card-element.StripeElement--focus {
+    border-color: #4285f4;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.stripe-card-element.StripeElement--invalid {
+    border-color: #fa755a;
+}
+
+.card-errors {
+    color: #fa755a;
+    font-size: 14px;
+    margin-top: 5px;
+    min-height: 20px;
+}
+
+.payment-summary {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.payment-summary p {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.payment-summary small {
+    color: #666;
+    font-size: 12px;
+}
+
+#submitPayment:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 } 

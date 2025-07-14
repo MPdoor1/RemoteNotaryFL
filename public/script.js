@@ -20,10 +20,19 @@ const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY'; // Replace with your EmailJS publi
 const EMAILJS_SERVICE_ID = 'service_notary'; // Replace with your EmailJS service ID
 const EMAILJS_TEMPLATE_ID = 'template_booking_confirmation'; // Replace with your template ID
 
-// Initialize EmailJS
+// Stripe Configuration
+// TODO: Replace with your actual Stripe publishable key
+const stripe = Stripe('pk_test_51ABC123...'); // Replace with your actual publishable key
+const elements = stripe.elements();
+let cardElement = null;
+
+// Initialize EmailJS and Stripe
 document.addEventListener('DOMContentLoaded', function() {
     // For now, we'll use a demo mode - you'll need to set up EmailJS account
     console.log('EmailJS initialized for booking confirmations');
+    
+    // Initialize Stripe Elements
+    initializeStripeElements();
 });
 
 // Pricing for different document types
@@ -35,6 +44,134 @@ const documentPricing = {
     'personal': 25,
     'financial': 40
 };
+
+// Stripe Elements initialization
+function initializeStripeElements() {
+    if (!cardElement) {
+        const style = {
+            base: {
+                fontSize: '16px',
+                color: '#424770',
+                '::placeholder': {
+                    color: '#aab7c4',
+                },
+            },
+            invalid: {
+                color: '#9e2146',
+            },
+        };
+        
+        cardElement = elements.create('card', { style });
+        cardElement.mount('#card-element');
+        
+        // Handle real-time validation errors from the card Element
+        cardElement.on('change', ({ error }) => {
+            const displayError = document.getElementById('card-errors');
+            if (error) {
+                displayError.textContent = error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+    }
+}
+
+function updatePaymentAmount() {
+    const documentType = document.getElementById('documentType').value;
+    const paymentAmount = document.getElementById('paymentAmount');
+    
+    if (documentType && documentPricing[documentType]) {
+        paymentAmount.textContent = documentPricing[documentType];
+    } else {
+        paymentAmount.textContent = '0';
+    }
+}
+
+// Process Stripe Payment
+async function processStripePayment(booking) {
+    try {
+        // Create payment intent
+        const response = await fetch('/create-payment-intent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                amount: booking.price,
+                booking_id: booking.id
+            })
+        });
+        
+        const { success, clientSecret, error } = await response.json();
+        
+        if (!success) {
+            throw new Error(error || 'Failed to create payment intent');
+        }
+        
+        // Confirm payment with Stripe
+        const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+                card: cardElement,
+                billing_details: {
+                    name: booking.name,
+                    email: booking.email,
+                    phone: booking.phone
+                }
+            }
+        });
+        
+        if (stripeError) {
+            throw new Error(stripeError.message);
+        }
+        
+        if (paymentIntent.status === 'succeeded') {
+            // Confirm payment and create booking on server
+            const confirmResponse = await fetch('/confirm-payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    payment_intent_id: paymentIntent.id,
+                    booking_data: {
+                        client_name: booking.name,
+                        email: booking.email,
+                        phone: booking.phone,
+                        booking_id: booking.id,
+                        appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        }),
+                        appointment_time: booking.timeDisplay,
+                        document_type: booking.documentType.replace('-', ' ').toUpperCase(),
+                        price: booking.price,
+                        special_requests: booking.specialRequests || 'None'
+                    }
+                })
+            });
+            
+            const confirmResult = await confirmResponse.json();
+            
+            if (confirmResult.success) {
+                // Store proof transaction ID if available
+                if (confirmResult.proof_transaction) {
+                    booking.proofTransactionId = confirmResult.proof_transaction.id;
+                }
+                return true;
+            } else {
+                throw new Error(confirmResult.message || 'Payment confirmation failed');
+            }
+        } else {
+            throw new Error('Payment was not successful');
+        }
+    } catch (error) {
+        console.error('Payment error:', error);
+        alert('Payment failed: ' + error.message);
+        return false;
+    }
+}
 
 function openBookingModal() {
     console.log('openBookingModal called');
@@ -62,6 +199,15 @@ function openBookingModal() {
     
     // Generate initial time slots
     generateTimeSlots();
+    
+    // Initialize Stripe Elements if not already done
+    initializeStripeElements();
+    
+    // Set up document type change listener
+    const documentTypeSelect = document.getElementById('documentType');
+    if (documentTypeSelect) {
+        documentTypeSelect.addEventListener('change', updatePaymentAmount);
+    }
 }
 
 function closeBookingModal() {
@@ -330,28 +476,50 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            const booking = {
-                id: Date.now().toString(),
-                name: formData.get('clientName'),
-                email: formData.get('clientEmail'),
-                phone: formData.get('clientPhone'),
-                documentType: formData.get('documentType'),
-                date: formData.get('appointmentDate'),
-                time: selectedTimeSlot.dataset.time,
-                timeDisplay: selectedTimeSlot.textContent.trim(),
-                specialRequests: formData.get('specialRequests'),
-                price: documentPricing[formData.get('documentType')],
-                status: 'scheduled',
-                createdAt: new Date().toISOString()
-            };
+            const submitButton = document.getElementById('submitPayment');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processing Payment...';
             
-            // Save booking
-            bookings.push(booking);
-            localStorage.setItem('notaryBookings', JSON.stringify(bookings));
-            
-            // Show confirmation
-            await showBookingConfirmation(booking);
-            closeBookingModal();
+            try {
+                const booking = {
+                    id: Date.now().toString(),
+                    name: formData.get('clientName'),
+                    email: formData.get('clientEmail'),
+                    phone: formData.get('clientPhone'),
+                    documentType: formData.get('documentType'),
+                    date: formData.get('appointmentDate'),
+                    time: selectedTimeSlot.dataset.time,
+                    timeDisplay: selectedTimeSlot.textContent.trim(),
+                    specialRequests: formData.get('specialRequests'),
+                    price: documentPricing[formData.get('documentType')],
+                    status: 'scheduled',
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Process payment through Stripe
+                const paymentSuccess = await processStripePayment(booking);
+                
+                if (paymentSuccess) {
+                    // Save booking
+                    bookings.push(booking);
+                    localStorage.setItem('notaryBookings', JSON.stringify(bookings));
+                    
+                    // Show confirmation
+                    await showBookingConfirmation(booking);
+                    
+                    // Close modal and reset form
+                    closeBookingModal();
+                    e.target.reset();
+                } else {
+                    alert('Payment failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Booking error:', error);
+                alert('An error occurred while processing your booking. Please try again.');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Pay & Schedule Appointment';
+            }
         });
     }
 });
@@ -510,11 +678,39 @@ async function sendMeetingLinkToBooking(bookingId) {
     }
     
     try {
-        // Generate a mock meeting link (replace with actual Proof.com API in Phase 3)
-        const meetingLink = `https://meet.proof.com/room/${booking.id}`;
-        await sendMeetingLinkEmail(booking, meetingLink);
-        alert(`📧 Meeting link sent to ${booking.email}`);
+        const response = await fetch('/send-meeting-link', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                bookingData: {
+                    email: booking.email,
+                    client_name: booking.name,
+                    booking_id: booking.id,
+                    appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }),
+                    appointment_time: booking.timeDisplay,
+                    document_type: booking.documentType.replace('-', ' ').toUpperCase()
+                },
+                transactionId: booking.proofTransactionId || null
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert(`📧 Meeting link sent to ${booking.email}`);
+            console.log('Meeting link sent:', result.meeting_link);
+        } else {
+            throw new Error(result.message || 'Failed to send meeting link');
+        }
     } catch (error) {
+        console.error('Failed to send meeting link:', error);
         alert(`❌ Failed to send meeting link: ${error.message}`);
     }
 }

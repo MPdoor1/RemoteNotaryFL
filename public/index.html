@@ -324,9 +324,21 @@
                         <textarea id="specialRequests" name="specialRequests" rows="3" placeholder="Any special requirements or additional information..."></textarea>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="paymentInfo">Payment Information</label>
+                        <div id="card-element" class="stripe-card-element">
+                            <!-- Stripe Elements will create form elements here -->
+                        </div>
+                        <div id="card-errors" role="alert" class="card-errors"></div>
+                        <div class="payment-summary">
+                            <p>Total: $<span id="paymentAmount">0</span></p>
+                            <small>Payment will be processed securely through Stripe</small>
+                        </div>
+                    </div>
+                    
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="closeBookingModal()">Cancel</button>
-                        <button type="submit" class="btn-primary">Schedule Appointment</button>
+                        <button type="submit" class="btn-primary" id="submitPayment">Pay & Schedule Appointment</button>
                     </div>
                 </form>
             </div>
@@ -341,6 +353,8 @@
 
     <!-- EmailJS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
     <script src="script.js"></script>
 </body>
 </html> 
