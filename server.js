@@ -30,32 +30,27 @@ const createProofNotarization = async (bookingData) => {
   try {
     console.log('Creating Proof transaction with API key:', process.env.PROOF_API_KEY ? 'API key present' : 'NO API KEY');
     
-    const transactionType = bookingData.service_type === 'notarization' ? 'notarization' : 'esign';
+    // Split the client name into first and last name
+    const nameParts = bookingData.client_name.split(' ');
+    const firstName = nameParts[0] || 'Customer';
+    const lastName = nameParts.slice(1).join(' ') || 'User';
     
     const transactionData = {
-      transaction_type: transactionType,
       signers: [
         {
           email: bookingData.email,
-          name: bookingData.client_name,
-          role: 'signer'
+          first_name: firstName,
+          last_name: lastName
         }
       ],
       documents: [
         {
-          name: `${bookingData.service_type}_document.pdf`,
-          template: 'blank_document' // Will be replaced with actual document
+          resource: 'https://static.notarize.com/Example.pdf', // Using Proof's test document
+          requirement: bookingData.service_type === 'notarization' ? 'notarization' : 'esign'
         }
       ],
-      metadata: {
-        booking_id: bookingData.booking_id,
-        appointment_date: bookingData.appointment_date,
-        appointment_time: bookingData.appointment_time,
-        service_type: bookingData.service_type,
-        service_name: bookingData.service_name,
-        product_id: bookingData.product_id,
-        price: bookingData.price
-      }
+      transaction_name: `${bookingData.service_name} - ${bookingData.booking_id}`,
+      external_id: bookingData.booking_id
     };
 
     console.log('Proof transaction data:', JSON.stringify(transactionData, null, 2));
@@ -85,8 +80,15 @@ const getProofMeetingLink = async (transactionId) => {
 
     // Extract meeting link from transaction data
     const transaction = response.data;
-    const meetingLink = transaction.signing_url || transaction.notarization_url;
+    console.log('Transaction response:', JSON.stringify(transaction, null, 2));
+    
+    // Check for transaction access link in signer_info
+    const meetingLink = transaction.signer_info?.transaction_access_link || 
+                       transaction.signing_url || 
+                       transaction.notarization_url ||
+                       `https://app.proof.com/transaction/${transactionId}`;
 
+    console.log('Extracted meeting link:', meetingLink);
     return meetingLink;
   } catch (error) {
     console.error('Error getting Proof meeting link:', error.response?.data || error.message);
@@ -339,7 +341,7 @@ app.post('/confirm-payment', async (req, res) => {
           } catch (linkError) {
             console.error('Failed to get meeting link:', linkError);
             // Use fallback link if Proof API fails
-            meetingLink = `https://proof.com/session/${proofTransaction.id}`;
+            meetingLink = `https://app.proof.com/transaction/${proofTransaction.id}`;
           }
         }
       } catch (proofError) {
@@ -351,7 +353,7 @@ app.post('/confirm-payment', async (req, res) => {
         console.error('4. Account permissions are insufficient');
         
         // Create fallback meeting link
-        meetingLink = `https://proof.com/room/${booking_data.booking_id}`;
+        meetingLink = `https://app.proof.com/booking/${booking_data.booking_id}`;
         console.log('Using fallback meeting link:', meetingLink);
       }
       
