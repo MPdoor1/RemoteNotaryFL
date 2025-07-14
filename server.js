@@ -19,7 +19,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Proof API configuration
-const PROOF_API_BASE_URL = 'https://api.proof.com/v1';
+const PROOF_API_BASE_URL = 'https://api.proof.com/v2';
 const PROOF_API_HEADERS = {
   'ApiKey': process.env.PROOF_API_KEY,
   'Content-Type': 'application/json'
@@ -57,7 +57,7 @@ const createProofNotarization = async (bookingData) => {
       activation_time: activationTime, // When the meeting becomes available
       expiration_time: expirationTime, // When the meeting expires
       suppress_email: false, // Allow Proof to send document upload email to client
-      draft: false, // Create as active transaction - client can upload documents immediately
+      draft: true, // Create as draft - client will upload documents and then activate
       message_to_signer: `Your live notary appointment is scheduled for ${bookingData.appointment_date} at ${bookingData.appointment_time}. 
 
 IMPORTANT: You must upload your documents before the meeting. Use the link provided to upload the documents you need notarized.
