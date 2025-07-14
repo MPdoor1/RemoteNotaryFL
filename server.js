@@ -21,7 +21,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 // Proof API configuration
 const PROOF_API_BASE_URL = 'https://api.proof.com/v1';
 const PROOF_API_HEADERS = {
-  'Authorization': `Bearer ${process.env.PROOF_API_KEY}`,
+  'ApiKey': process.env.PROOF_API_KEY,
   'Content-Type': 'application/json'
 };
 
