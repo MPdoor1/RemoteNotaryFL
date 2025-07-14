@@ -46,11 +46,14 @@ const createProofNotarization = async (bookingData) => {
       documents: [
         {
           resource: 'https://static.notarize.com/Example.pdf', // Using Proof's test document
-          requirement: bookingData.service_type === 'notarization' ? 'notarization' : 'esign'
+          requirement: 'notarization' // Always use notarization for live meetings
         }
       ],
       transaction_name: `${bookingData.service_name} - ${bookingData.booking_id}`,
-      external_id: bookingData.booking_id
+      external_id: bookingData.booking_id,
+      require_secondary_photo_id: true, // Enhanced ID verification for notarization
+      message_to_signer: `Your ${bookingData.service_name} appointment is scheduled for ${bookingData.appointment_date} at ${bookingData.appointment_time}. This will be a live video meeting with a notary. Please have your documents ready and ensure you have a stable internet connection.`,
+      message_signature: "Remote Notary FL Team"
     };
 
     console.log('Proof transaction data:', JSON.stringify(transactionData, null, 2));
