@@ -127,12 +127,9 @@ function selectTimeSlot(element) {
 }
 
 // Email Templates and Functions
-function sendBookingConfirmationEmail(booking) {
-    // For demo purposes, we'll simulate email sending
-    // In production, you'll replace this with actual EmailJS call
-    
+async function sendBookingConfirmationEmail(booking) {
     const emailData = {
-        to_email: booking.email,
+        email: booking.email,
         client_name: booking.name,
         booking_id: booking.id,
         appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
@@ -148,27 +145,37 @@ function sendBookingConfirmationEmail(booking) {
         special_requests: booking.specialRequests || 'None'
     };
     
-    // Simulate email sending (replace with actual EmailJS call)
     console.log('📧 Sending confirmation email to:', booking.email);
-    console.log('Email data:', emailData);
     
-    // TODO: Replace with actual EmailJS send
-    // emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, emailData, EMAILJS_PUBLIC_KEY)
-    //     .then(function(response) {
-    //         console.log('Email sent successfully!', response.status, response.text);
-    //     }, function(error) {
-    //         console.error('Failed to send email:', error);
-    //     });
-    
-    return emailData;
+    try {
+        const response = await fetch('/send-booking-confirmation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(emailData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ Email sent successfully!');
+            return emailData;
+        } else {
+            console.error('❌ Failed to send email:', result.message);
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error('❌ Error sending email:', error);
+        throw error;
+    }
 }
 
-function sendMeetingLinkEmail(booking, meetingLink) {
-    const emailData = {
-        to_email: booking.email,
+async function sendMeetingLinkEmail(booking, meetingLink) {
+    const bookingData = {
+        email: booking.email,
         client_name: booking.name,
         booking_id: booking.id,
-        meeting_link: meetingLink,
         appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -182,8 +189,28 @@ function sendMeetingLinkEmail(booking, meetingLink) {
     console.log('📧 Sending meeting link email to:', booking.email);
     console.log('Meeting link:', meetingLink);
     
-    // TODO: Replace with actual EmailJS send for meeting link template
-    return emailData;
+    try {
+        const response = await fetch('/send-meeting-link', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ bookingData, meetingLink })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ Meeting link email sent successfully!');
+            return bookingData;
+        } else {
+            console.error('❌ Failed to send meeting link email:', result.message);
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error('❌ Error sending meeting link email:', error);
+        throw error;
+    }
 }
 
 function sendReminderEmail(booking) {
@@ -215,32 +242,59 @@ function calculateHoursUntilAppointment(booking) {
     return Math.ceil(timeDiff / (1000 * 3600)); // Convert to hours
 }
 
-function showBookingConfirmation(booking) {
+async function showBookingConfirmation(booking) {
     // Send confirmation email
-    const emailData = sendBookingConfirmationEmail(booking);
-    
-    const confirmationMessage = `
-        🎉 Appointment Scheduled Successfully!
+    try {
+        const emailData = await sendBookingConfirmationEmail(booking);
         
-        📅 Date: ${emailData.appointment_date}
-        ⏰ Time: ${emailData.appointment_time}
-        📋 Document: ${emailData.document_type}
-        💰 Price: $${emailData.price}
+        const confirmationMessage = `
+            🎉 Appointment Scheduled Successfully!
+            
+            📅 Date: ${emailData.appointment_date}
+            ⏰ Time: ${emailData.appointment_time}
+            📋 Document: ${emailData.document_type}
+            💰 Price: $${emailData.price}
+            
+            📧 Confirmation email sent to: ${booking.email}
+            📱 Meeting link will be sent 24 hours before appointment
+            ⏰ Reminder email will be sent 1 hour before appointment
+            
+            Next Steps:
+            1. Check your email for confirmation details
+            2. You'll receive a secure meeting link via email
+            3. Have your ID and documents ready
+            4. Payment will be processed after the session
+            
+            Booking ID: ${booking.id}
+        `;
         
-        📧 Confirmation email sent to: ${booking.email}
-        📱 Meeting link will be sent 24 hours before appointment
-        ⏰ Reminder email will be sent 1 hour before appointment
+        alert(confirmationMessage);
+    } catch (error) {
+        console.error('Error sending confirmation email:', error);
         
-        Next Steps:
-        1. Check your email for confirmation details
-        2. You'll receive a secure meeting link via email
-        3. Have your ID and documents ready
-        4. Payment will be processed after the session
+        const confirmationMessage = `
+            🎉 Appointment Scheduled Successfully!
+            
+            📅 Date: ${new Date(booking.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            ⏰ Time: ${booking.timeDisplay}
+            📋 Document: ${booking.documentType.replace('-', ' ').toUpperCase()}
+            💰 Price: $${booking.price}
+            
+            ⚠️ Email notification failed, but booking is confirmed
+            📱 Meeting link will be sent 24 hours before appointment
+            ⏰ Reminder email will be sent 1 hour before appointment
+            
+            Next Steps:
+            1. Please note down your booking details
+            2. You'll receive a secure meeting link via email
+            3. Have your ID and documents ready
+            4. Payment will be processed after the session
+            
+            Booking ID: ${booking.id}
+        `;
         
-        Booking ID: ${booking.id}
-    `;
-    
-    alert(confirmationMessage);
+        alert(confirmationMessage);
+    }
 }
 
 // Wait for DOM to load before setting up event listeners
@@ -265,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (form) {
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const formData = new FormData(e.target);
@@ -296,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('notaryBookings', JSON.stringify(bookings));
             
             // Show confirmation
-            showBookingConfirmation(booking);
+            await showBookingConfirmation(booking);
             closeBookingModal();
         });
     }
@@ -448,17 +502,21 @@ function sendTestReminder() {
     alert(`📧 Test reminder sent to ${testEmail}`);
 }
 
-function sendMeetingLinkToBooking(bookingId) {
+async function sendMeetingLinkToBooking(bookingId) {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) {
         alert('Booking not found');
         return;
     }
     
-    // Generate a mock meeting link (replace with actual Proof.com API in Phase 3)
-    const meetingLink = `https://meet.proof.com/room/${booking.id}`;
-    sendMeetingLinkEmail(booking, meetingLink);
-    alert(`📧 Meeting link sent to ${booking.email}`);
+    try {
+        // Generate a mock meeting link (replace with actual Proof.com API in Phase 3)
+        const meetingLink = `https://meet.proof.com/room/${booking.id}`;
+        await sendMeetingLinkEmail(booking, meetingLink);
+        alert(`📧 Meeting link sent to ${booking.email}`);
+    } catch (error) {
+        alert(`❌ Failed to send meeting link: ${error.message}`);
+    }
 }
 
 function sendReminderToBooking(bookingId) {
