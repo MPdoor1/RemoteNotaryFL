@@ -50,7 +50,7 @@ const serviceOptions = {
     },
     'test': {
         name: 'Test Service',
-        price: 5,
+        price: 1,
         productId: 'prod_SgAlAcYiNHhPSC',
         description: 'Test service for email and proof link verification'
     }

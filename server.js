@@ -28,6 +28,8 @@ const PROOF_API_HEADERS = {
 // Proof API helper functions
 const createProofNotarization = async (bookingData) => {
   try {
+    console.log('Creating Proof transaction with API key:', process.env.PROOF_API_KEY ? 'API key present' : 'NO API KEY');
+    
     const transactionType = bookingData.service_type === 'notarization' ? 'notarization' : 'esign';
     
     const transactionData = {
@@ -56,13 +58,21 @@ const createProofNotarization = async (bookingData) => {
       }
     };
 
+    console.log('Proof transaction data:', JSON.stringify(transactionData, null, 2));
+    console.log('Proof API URL:', `${PROOF_API_BASE_URL}/transactions`);
+    console.log('Proof API Headers:', PROOF_API_HEADERS);
+
     const response = await axios.post(`${PROOF_API_BASE_URL}/transactions`, transactionData, {
       headers: PROOF_API_HEADERS
     });
 
+    console.log('Proof API response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error creating Proof transaction:', error.response?.data || error.message);
+    console.error('Error creating Proof transaction:');
+    console.error('Status:', error.response?.status);
+    console.error('Data:', error.response?.data);
+    console.error('Message:', error.message);
     throw error;
   }
 };
@@ -85,7 +95,7 @@ const getProofMeetingLink = async (transactionId) => {
 };
 
 // Email templates
-const createBookingConfirmationEmail = (bookingData, meetingLink = null) => {
+const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusinessCopy = false) => {
   const meetingLinkSection = meetingLink ? `
     <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
       <h3 style="color: #2e7d32; margin-top: 0;">🔗 YOUR MEETING LINK</h3>
@@ -97,10 +107,19 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null) => {
     </div>
   ` : '';
 
+  const recipient = isBusinessCopy ? 'RemoteNotaryFL@gmail.com' : bookingData.email;
+  const subjectPrefix = isBusinessCopy ? '[BUSINESS COPY] ' : '';
+
   return {
-    to: [bookingData.email, 'RemoteNotaryFL@gmail.com'], // Send to both client and business
+    to: recipient,
     from: process.env.SENDGRID_FROM_EMAIL || 'RemoteNotaryFL@gmail.com',
-    subject: `✅ ${bookingData.service_name} Appointment Confirmed - ${bookingData.booking_id}`,
+    replyTo: 'RemoteNotaryFL@gmail.com',
+    subject: `${subjectPrefix}✅ ${bookingData.service_name} Appointment Confirmed - ${bookingData.booking_id}`,
+    headers: {
+      'X-Priority': '1',
+      'X-MSMail-Priority': 'High',
+      'Importance': 'high'
+    },
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #2c3e50;">Appointment Confirmed!</h2>
@@ -325,13 +344,24 @@ app.post('/confirm-payment', async (req, res) => {
         }
       } catch (proofError) {
         console.error('Failed to create Proof transaction:', proofError);
+        console.error('This might be because:');
+        console.error('1. Proof API key is invalid or missing');
+        console.error('2. Proof account needs to be activated');
+        console.error('3. API endpoint or format has changed');
+        console.error('4. Account permissions are insufficient');
+        
         // Create fallback meeting link
         meetingLink = `https://proof.com/room/${booking_data.booking_id}`;
+        console.log('Using fallback meeting link:', meetingLink);
       }
       
-      // Send confirmation email with meeting link
-      const emailData = createBookingConfirmationEmail(booking_data, meetingLink);
-      await sgMail.send(emailData);
+      // Send confirmation email to client
+      const clientEmailData = createBookingConfirmationEmail(booking_data, meetingLink, false);
+      await sgMail.send(clientEmailData);
+      
+      // Send copy to business
+      const businessEmailData = createBookingConfirmationEmail(booking_data, meetingLink, true);
+      await sgMail.send(businessEmailData);
       
       res.json({
         success: true,
