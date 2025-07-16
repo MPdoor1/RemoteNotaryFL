@@ -2,12 +2,16 @@
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+        const href = this.getAttribute('href');
+        // Ensure href is valid and not just "#"
+        if (href && href.length > 1) {
+            const target = document.querySelector(href);
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
         }
     });
 });
@@ -428,7 +432,7 @@ async function showBookingConfirmation(booking) {
             
             📅 Date: ${formatBookingDate(booking.date)}
             ⏰ Time: ${booking.timeDisplay}
-            📋 Document: ${booking.documentType.replace('-', ' ').toUpperCase()}
+            📋 Document: ${booking.documentType ? booking.documentType.replace('-', ' ').toUpperCase() : 'N/A'}
             💰 Price: $${booking.price}
             
             ⚠️ Email notification failed, but booking is confirmed
@@ -634,17 +638,20 @@ const adminCode = ['a', 'd', 'm', 'i', 'n']; // Type "admin" to access panel
 
 // Listen for admin key sequence
 document.addEventListener('keydown', function(event) {
-    adminKeySequence.push(event.key.toLowerCase());
-    
-    // Keep only the last 5 keys
-    if (adminKeySequence.length > 5) {
-        adminKeySequence.shift();
-    }
-    
-    // Check if admin code was entered
-    if (adminKeySequence.join('') === adminCode.join('')) {
-        openAdminPanel();
-        adminKeySequence = []; // Reset sequence
+    // Check if event.key exists before calling toLowerCase
+    if (event.key) {
+        adminKeySequence.push(event.key.toLowerCase());
+        
+        // Keep only the last 5 keys
+        if (adminKeySequence.length > 5) {
+            adminKeySequence.shift();
+        }
+        
+        // Check if admin code was entered
+        if (adminKeySequence.join('') === adminCode.join('')) {
+            openAdminPanel();
+            adminKeySequence = []; // Reset sequence
+        }
     }
 });
 
