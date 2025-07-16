@@ -16,6 +16,60 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
+// Timezone Detection and Conversion
+const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const jacksonvilleTZ = 'America/New_York'; // Jacksonville, FL timezone
+
+// Get user's timezone name for display
+const getUserTimezoneDisplay = () => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const shortName = timezone.split('/').pop().replace(/_/g, ' ');
+    return shortName;
+};
+
+// Convert time from user timezone to EST
+const convertToEST = (dateString, timeString) => {
+    const userDateTime = new Date(`${dateString}T${timeString}`);
+    const estDateTime = new Date(userDateTime.toLocaleString("en-US", {timeZone: jacksonvilleTZ}));
+    return {
+        date: estDateTime.toISOString().split('T')[0],
+        time: estDateTime.toTimeString().substr(0, 5)
+    };
+};
+
+// Convert time from EST to user timezone
+const convertFromEST = (dateString, timeString) => {
+    // Create a date object assuming the input is in EST
+    const estDateTime = new Date(`${dateString}T${timeString}`);
+    
+    // Convert to user's timezone
+    const userDateTime = new Date(estDateTime.toLocaleString("en-US", {timeZone: userTimezone}));
+    
+    return {
+        date: userDateTime.toISOString().split('T')[0],
+        time: userDateTime.toTimeString().substr(0, 5)
+    };
+};
+
+// Format time for display with timezone indicator
+const formatTimeWithTimezone = (hour, minute, showEST = false) => {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+    const timeStr = `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+    
+    if (showEST) {
+        return `${timeStr} EST`;
+    } else {
+        const tzDisplay = getUserTimezoneDisplay();
+        return `${timeStr} ${tzDisplay}`;
+    }
+};
+
+// Check if user is in Eastern Time
+const isUserInEasternTime = () => {
+    return userTimezone === jacksonvilleTZ || userTimezone === 'America/Detroit' || userTimezone === 'America/Toronto';
+};
+
 // Booking System
 let bookings = JSON.parse(localStorage.getItem('notaryBookings') || '[]');
 
@@ -150,7 +204,7 @@ async function processStripePayment(booking) {
                         phone: booking.phone,
                         booking_id: booking.id,
                         appointment_date: formatBookingDate(booking.date),
-                        appointment_time: booking.timeDisplay,
+                        appointment_time: booking.time, // Use EST time for server processing
                         service_type: booking.serviceType,
                         service_name: booking.serviceName,
                         product_id: booking.productId,
@@ -233,30 +287,51 @@ function generateTimeSlots() {
         return;
     }
     
-    // Business hours: 8 AM to 8 PM, 30-minute slots
+    // Add timezone info display
+    const isEasternTime = isUserInEasternTime();
+    const tzInfo = isEasternTime ? 
+        '<div class="timezone-info">🕐 You\'re in Eastern Time - same as Jacksonville, FL!</div>' :
+        `<div class="timezone-info">🕐 Times shown in your timezone (${getUserTimezoneDisplay()}). Jacksonville, FL times shown in EST.</div>`;
+    
+    // Business hours: 8 AM to 8 PM EST, 30-minute slots
     const timeSlots = [];
     for (let hour = 8; hour <= 19; hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
-            const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-            const displayTime = formatTime(hour, minute);
+            const estTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
             
-            // Check if slot is already booked
+            // Convert EST to user's timezone for display
+            const userTimeSlot = convertFromEST(selectedDate, estTime);
+            const userHour = parseInt(userTimeSlot.time.split(':')[0]);
+            const userMinute = parseInt(userTimeSlot.time.split(':')[1]);
+            
+            // Skip if converted time is outside reasonable hours (e.g., 2 AM)
+            if (userHour < 6 || userHour > 23) continue;
+            
+            const displayTime = isEasternTime ? 
+                formatTimeWithTimezone(hour, minute, true) :
+                formatTimeWithTimezone(userHour, userMinute, false);
+            
+            const estDisplay = isEasternTime ? '' : ` (${formatTimeWithTimezone(hour, minute, true)})`;
+            
+            // Check if slot is already booked (using EST time for consistency)
             const isBooked = bookings.some(booking => 
-                booking.date === selectedDate && booking.time === time
+                booking.date === selectedDate && booking.time === estTime
             );
             
             timeSlots.push({
-                time: time,
-                display: displayTime,
+                time: estTime, // Always store EST time
+                userTime: userTimeSlot.time, // User's local time
+                display: displayTime + estDisplay,
                 booked: isBooked
             });
         }
     }
     
     // Generate time slot buttons
-    timeSlotsContainer.innerHTML = timeSlots.map(slot => `
+    timeSlotsContainer.innerHTML = tzInfo + timeSlots.map(slot => `
         <div class="time-slot ${slot.booked ? 'unavailable' : ''}" 
              data-time="${slot.time}" 
+             data-user-time="${slot.userTime}"
              onclick="${slot.booked ? '' : 'selectTimeSlot(this)'}">
             ${slot.display}
             ${slot.booked ? '<br><small>Booked</small>' : ''}
@@ -278,6 +353,17 @@ function selectTimeSlot(element) {
     
     // Select current slot
     element.classList.add('selected');
+    
+    // Store both EST time (for server) and user time (for display)
+    const estTime = element.getAttribute('data-time');
+    const userTime = element.getAttribute('data-user-time');
+    
+    // Update global variables for booking
+    window.selectedTimeSlot = {
+        estTime: estTime,
+        userTime: userTime,
+        displayText: element.textContent.trim()
+    };
 }
 
 // Helper function to format date without timezone issues
@@ -301,7 +387,7 @@ async function sendBookingConfirmationEmail(booking) {
         client_name: booking.name,
         booking_id: booking.id,
         appointment_date: formatBookingDate(booking.date),
-        appointment_time: booking.timeDisplay,
+        appointment_time: booking.time, // Use EST time for server processing
         service_type: booking.serviceType,
         service_name: booking.serviceName || booking.serviceType,
         price: booking.price,
@@ -341,7 +427,7 @@ async function sendMeetingLinkEmail(booking, meetingLink) {
         client_name: booking.name,
         booking_id: booking.id,
         appointment_date: formatBookingDate(booking.date),
-        appointment_time: booking.timeDisplay,
+        appointment_time: booking.time, // Use EST time for server processing
         document_type: booking.documentType.replace('-', ' ').toUpperCase()
     };
     
@@ -378,7 +464,7 @@ function sendReminderEmail(booking) {
         client_name: booking.name,
         booking_id: booking.id,
         appointment_date: formatBookingDate(booking.date),
-        appointment_time: booking.timeDisplay,
+        appointment_time: booking.time, // Use EST time for server processing
         service_type: booking.serviceType,
         service_name: booking.serviceName || booking.serviceType,
         hours_until: calculateHoursUntilAppointment(booking)
@@ -578,6 +664,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const allEmails = emailValidation.emails;
                 const primaryEmail = allEmails[0]; // Use first email for billing
                 
+                // Get timezone-aware time data
+                const selectedTime = window.selectedTimeSlot || {
+                    estTime: selectedTimeSlot.dataset.time,
+                    displayText: selectedTimeSlot.textContent.trim()
+                };
+                
                 const booking = {
                     id: Date.now().toString(),
                     name: formData.get('clientName'),
@@ -588,8 +680,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     serviceName: selectedService.name,
                     productId: selectedService.productId,
                     date: formData.get('appointmentDate'),
-                    time: selectedTimeSlot.dataset.time,
-                    timeDisplay: selectedTimeSlot.textContent.trim(),
+                    time: selectedTime.estTime, // Always use EST time for server
+                    timeDisplay: selectedTime.displayText, // User-friendly display with timezone
                     specialRequests: formData.get('specialRequests'),
                     price: selectedService.price,
                     status: 'scheduled',
@@ -795,7 +887,7 @@ async function sendMeetingLinkToBooking(bookingId) {
                     client_name: booking.name,
                     booking_id: booking.id,
                     appointment_date: formatBookingDate(booking.date),
-                    appointment_time: booking.timeDisplay,
+                    appointment_time: booking.time, // Use EST time for server processing
                     service_type: booking.serviceType,
                     service_name: booking.serviceName || booking.serviceType
                 },
