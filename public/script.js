@@ -40,19 +40,13 @@ const serviceOptions = {
         name: 'Notarization Service',
         price: 50,
         productId: 'prod_SgACWbsnIVSura',
-        description: 'Professional remote notarization with identity verification'
+        description: 'Complete notarization process with identity verification'
     },
     'signing': {
-        name: 'Document Signing Service', 
+        name: 'Real Estate Signing', 
         price: 200,
         productId: 'prod_SgABkZ7XWvSiYa',
-        description: 'Comprehensive document signing and notarization service'
-    },
-    'test': {
-        name: 'Test Service',
-        price: 1,
-        productId: 'prod_SgAlAcYiNHhPSC',
-        description: 'Test service for email and proof link verification'
+        description: 'Complete real estate transaction signing and notarization'
     }
 };
 
@@ -1025,7 +1019,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function startAutoSlide() {
-        slideInterval = setInterval(nextSlide, 5000); // Slower, more comfortable timing
+        // Slower timing for mobile, comfortable timing for desktop
+        const timing = window.innerWidth <= 768 ? 7000 : 6000;
+        slideInterval = setInterval(nextSlide, timing);
     }
     
     // Handle window resize to recalculate positions
@@ -1044,7 +1040,9 @@ document.addEventListener('DOMContentLoaded', function() {
         dot.addEventListener('click', function() {
             stopAutoSlide();
             showSlide(index);
-            setTimeout(startAutoSlide, 1500); // Restart auto-slide after 1.5 seconds
+            // Longer delay on mobile before restarting
+            const restartDelay = window.innerWidth <= 768 ? 3000 : 1500;
+            setTimeout(startAutoSlide, restartDelay);
         });
     });
 
@@ -1090,7 +1088,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const prevIndex = currentSlide === 0 ? slides.length - 1 : currentSlide - 1;
                 showSlide(prevIndex);
             }
-            setTimeout(startAutoSlide, 1500);
+            // Longer delay on mobile after swipe
+            const restartDelay = window.innerWidth <= 768 ? 4000 : 1500;
+            setTimeout(startAutoSlide, restartDelay);
         }
     }
 }); 

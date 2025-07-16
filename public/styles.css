@@ -92,6 +92,27 @@ header.scrolled {
     width: 100%;
 }
 
+/* Book Meeting Button */
+.book-meeting-btn {
+    background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%) !important;
+    color: #ffffff !important;
+    border-radius: 25px !important;
+    padding: 12px 24px !important;
+    font-weight: bold !important;
+    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.book-meeting-btn:hover {
+    background: linear-gradient(135deg, #DAA520 0%, #B8860B 100%) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 20px rgba(184, 134, 11, 0.4) !important;
+}
+
+.book-meeting-btn::after {
+    display: none !important;
+}
+
 /* Hero Section */
 .hero {
     background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 50%, #1a1a1a 100%);
@@ -808,14 +829,61 @@ footer::before {
     background: linear-gradient(90deg, transparent, #B8860B, transparent);
 }
 
-footer p {
-    font-size: 1.1rem;
-    color: #cccccc;
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.footer-contact {
+    text-align: left;
+}
+
+.footer-contact h4 {
+    color: #B8860B;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.footer-contact p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+}
+
+.footer-contact a {
+    color: #DAA520;
+    text-decoration: none;
     transition: color 0.3s ease;
 }
 
-footer:hover p {
+.footer-contact a:hover {
+    color: #B8860B;
+}
+
+.footer-info p {
+    font-size: 1rem;
+    color: #cccccc;
+    margin: 0;
+    transition: color 0.3s ease;
+}
+
+.footer-info:hover p {
     color: #DAA520;
+}
+
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 2rem;
+    }
+    
+    .footer-contact {
+        text-align: center;
+    }
 }
 
 /* Admin Panel */
@@ -1235,10 +1303,18 @@ footer:hover p {
         gap: 1.5rem;
         padding: 1.5rem;
         flex: 0 0 100%; /* On mobile, each slide takes full width */
+        min-height: 350px; /* Ensure consistent height */
     }
     
     .slider-track {
         width: 300%; /* Maintain 3 slides width */
+        transition: transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Slower transition on mobile */
+    }
+    
+    .slider-container {
+        padding: 0 1rem; /* Add padding to prevent cutoff */
+        margin: 0 auto;
+        max-width: 100%;
     }
     
     .step-number {
