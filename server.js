@@ -135,7 +135,7 @@ const getProofMeetingLink = async (transactionId) => {
 const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
   return {
     to: ['remotenotaryfl@remotenotaryfl.com', 'remotenotaryfl@gmail.com'], // Send to both business and personal
-    from: process.env.SENDGRID_FROM_EMAIL || 'remotenotaryfl@remotenotaryfl.com',
+    from: 'remotenotaryfl@remotenotaryfl.com',
     subject: `🔔 NEW BOOKING ALERT - ${bookingData.client_name} - ${bookingData.booking_id}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -216,7 +216,7 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
 
   return {
     to: recipient,
-    from: process.env.SENDGRID_FROM_EMAIL || 'remotenotaryfl@remotenotaryfl.com',
+    from: 'remotenotaryfl@remotenotaryfl.com',
     replyTo: 'remotenotaryfl@remotenotaryfl.com',
     subject: `${subjectPrefix}✅ ${bookingData.service_name} Appointment Confirmed - ${bookingData.booking_id}`,
     headers: {
@@ -296,7 +296,7 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
 const createMeetingLinkEmail = (bookingData, meetingLink) => {
   return {
     to: [bookingData.email, 'remotenotaryfl@remotenotaryfl.com', 'remotenotaryfl@gmail.com'], // Send to client and both business emails
-    from: process.env.SENDGRID_FROM_EMAIL || 'remotenotaryfl@remotenotaryfl.com',
+    from: 'remotenotaryfl@remotenotaryfl.com',
     subject: `🔗 Your Notarization Meeting Link - ${bookingData.booking_id}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
