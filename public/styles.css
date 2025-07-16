@@ -575,6 +575,116 @@ header.scrolled {
     color: #2c2c2c;
 }
 
+/* Testimonials Section */
+.testimonials {
+    padding: 100px 0;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+    position: relative;
+}
+
+.testimonials::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #B8860B, transparent);
+}
+
+.testimonials h2 {
+    text-align: center;
+    margin-bottom: 4rem;
+    font-size: 3rem;
+    color: #1a1a1a;
+    font-weight: bold;
+    position: relative;
+    animation: fadeInUp 1s ease-out;
+}
+
+.testimonials h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, #B8860B, #DAA520);
+    border-radius: 2px;
+}
+
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.testimonial-card {
+    background: #ffffff;
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(26, 26, 26, 0.1);
+    position: relative;
+    border: 1px solid rgba(184, 134, 11, 0.1);
+    transition: all 0.4s ease;
+}
+
+.testimonial-card::before {
+    content: '"';
+    position: absolute;
+    top: -20px;
+    left: 30px;
+    font-size: 4rem;
+    color: #B8860B;
+    font-family: serif;
+    line-height: 1;
+}
+
+.testimonial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(26, 26, 26, 0.15);
+}
+
+.testimonial-content {
+    margin-bottom: 2rem;
+}
+
+.testimonial-content p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #4a4a4a;
+    font-style: italic;
+    margin: 0;
+}
+
+.testimonial-author {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(184, 134, 11, 0.2);
+}
+
+.author-info h4 {
+    margin: 0;
+    color: #1a1a1a;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.author-info span {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.rating .stars {
+    color: #B8860B;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+}
+
 /* FAQ Section */
 .faq {
     padding: 100px 0;
@@ -1293,7 +1403,26 @@ footer::before {
         gap: 1.5rem;
     }
     
-    .services h2, .faq h2, .about h2, .contact h2, .how-it-works h2 {
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .testimonial-card {
+        padding: 2rem;
+    }
+    
+    .testimonial-content p {
+        font-size: 1rem;
+    }
+    
+    .testimonial-author {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .services h2, .faq h2, .about h2, .contact h2, .how-it-works h2, .testimonials h2 {
         font-size: 2.2rem;
     }
     
@@ -1606,5 +1735,88 @@ footer::before {
     .remove-email-btn {
         width: 100%;
         margin-top: 5px;
+    }
+}
+
+/* Security Section Styles */
+.security-section {
+    background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+    border: 2px solid #B8860B;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.1);
+}
+
+.security-badges {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.security-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.security-icon {
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
+    color: white;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.security-text {
+    flex: 1;
+}
+
+.security-text strong {
+    color: #1a1a1a;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.security-text small {
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.privacy-notice {
+    background: rgba(184, 134, 11, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    border-left: 4px solid #B8860B;
+}
+
+.privacy-notice p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+}
+
+@media (max-width: 768px) {
+    .security-badges {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .security-badge {
+        gap: 8px;
+    }
+    
+    .security-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1.2rem;
     }
 } 
