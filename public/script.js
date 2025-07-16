@@ -1187,4 +1187,4 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(startAutoSlide, restartDelay);
         }
     }
-}); 
+}); // Force redeploy
