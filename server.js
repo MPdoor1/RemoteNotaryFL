@@ -20,6 +20,76 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Jacksonville, FL timezone handling
+const formatDateTimeForJacksonville = (dateString, timeString) => {
+  try {
+    // Parse the date and time
+    const appointmentDateTime = new Date(`${dateString} ${timeString}`);
+    
+    // Format for Jacksonville, FL (Eastern Time)
+    const options = {
+      timeZone: 'America/New_York', // Jacksonville, FL is in Eastern Time
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    };
+    
+    const formatted = appointmentDateTime.toLocaleString('en-US', options);
+    return formatted + ' ET'; // Add Eastern Time indicator
+  } catch (error) {
+    console.error('Error formatting date/time:', error);
+    return `${dateString} at ${timeString} ET`;
+  }
+};
+
+const formatDateForJacksonville = (dateString) => {
+  try {
+    const date = new Date(dateString);
+    const options = {
+      timeZone: 'America/New_York',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    };
+    return date.toLocaleDateString('en-US', options);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
+};
+
+const formatTimeForJacksonville = (timeString) => {
+  try {
+    // Parse time string (assumes format like "14:30" or "2:30 PM")
+    const today = new Date();
+    const [time, period] = timeString.includes('M') ? timeString.split(' ') : [timeString, null];
+    const [hours, minutes] = time.split(':').map(Number);
+    
+    let hour24 = hours;
+    if (period === 'PM' && hours !== 12) hour24 += 12;
+    if (period === 'AM' && hours === 12) hour24 = 0;
+    
+    const dateTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour24, minutes);
+    
+    const options = {
+      timeZone: 'America/New_York',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    };
+    
+    return dateTime.toLocaleTimeString('en-US', options) + ' ET';
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return timeString + ' ET';
+  }
+};
+
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -74,11 +144,15 @@ const createProofNotarization = async (bookingData) => {
     console.log('Parsed email addresses:', emails);
     
     // Parse the appointment date and time to create ISO date for activation
+    // Parse as Jacksonville, FL timezone (Eastern Time)
     const appointmentDateTime = new Date(`${bookingData.appointment_date} ${bookingData.appointment_time}`);
-    const activationTime = appointmentDateTime.toISOString();
+    
+    // Convert to Jacksonville timezone for proper handling
+    const easternTime = new Date(appointmentDateTime.toLocaleString("en-US", {timeZone: "America/New_York"}));
+    const activationTime = easternTime.toISOString();
     
     // Set expiration to 2 hours after appointment time
-    const expirationDateTime = new Date(appointmentDateTime.getTime() + (2 * 60 * 60 * 1000));
+    const expirationDateTime = new Date(easternTime.getTime() + (2 * 60 * 60 * 1000));
     const expirationTime = expirationDateTime.toISOString();
 
     // Create signers for each email address
@@ -159,6 +233,9 @@ const getProofMeetingLink = async (transactionId) => {
 // Email templates
 
 const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
+  // Format the appointment date and time for Jacksonville, FL timezone
+  const formattedDateTime = formatDateTimeForJacksonville(bookingData.appointment_date, bookingData.appointment_time);
+  
   return {
     to: ['remotenotaryfl@remotenotaryfl.com', 'remotenotaryfl@gmail.com'], // Send to both business and personal
     from: 'remotenotaryfl@remotenotaryfl.com',
@@ -177,8 +254,7 @@ const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
               <li style="margin: 10px 0;"><strong>👤 Client:</strong> ${bookingData.client_name}</li>
               <li style="margin: 10px 0;"><strong>📧 Email:</strong> ${bookingData.email}</li>
               <li style="margin: 10px 0;"><strong>📞 Phone:</strong> ${bookingData.phone || 'Not provided'}</li>
-              <li style="margin: 10px 0;"><strong>📅 Date:</strong> ${bookingData.appointment_date}</li>
-              <li style="margin: 10px 0;"><strong>⏰ Time:</strong> ${bookingData.appointment_time}</li>
+              <li style="margin: 10px 0;"><strong>📅 Date & Time:</strong> ${formattedDateTime}</li>
               <li style="margin: 10px 0;"><strong>💼 Service:</strong> ${bookingData.service_name}</li>
               <li style="margin: 10px 0;"><strong>💰 Amount:</strong> $${bookingData.price} (PAID)</li>
               <li style="margin: 10px 0;"><strong>🆔 Booking ID:</strong> ${bookingData.booking_id}</li>
@@ -194,7 +270,7 @@ const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
           
           ${meetingLink ? `
           <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
-            <h4 style="color: #2e7d32; margin: 0 0 10px 0;">🎥 Meeting Link Ready</h4>
+            <h4 style="color: #2e7d32; margin: 0 0 10px 0;">🎥 Meeting Link Ready NOW!</h4>
             <a href="${meetingLink}" style="display: inline-block; background: #4caf50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Join Meeting</a>
           </div>
           ` : ''}
@@ -203,7 +279,7 @@ const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
             <h4 style="color: #1976d2; margin: 0 0 10px 0;">⏰ Next Steps:</h4>
             <ul style="margin: 0; padding-left: 20px;">
               <li>Client will receive their confirmation email automatically</li>
-              <li>Meeting link is active 15 minutes before appointment</li>
+              <li>Meeting link is active NOW and sent to client immediately</li>
               <li>Client will upload documents via Proof.com</li>
               <li>Be ready to join the meeting at scheduled time</li>
             </ul>
@@ -221,13 +297,18 @@ const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
 };
 
 const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusinessCopy = false) => {
+  // Format the appointment date and time for Jacksonville, FL timezone
+  const formattedDateTime = formatDateTimeForJacksonville(bookingData.appointment_date, bookingData.appointment_time);
+  const formattedDate = formatDateForJacksonville(bookingData.appointment_date);
+  const formattedTime = formatTimeForJacksonville(bookingData.appointment_time);
+  
   const meetingLinkSection = meetingLink ? `
             <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-          <h3 style="color: #2e7d32; margin-top: 0;">🎥 LIVE NOTARY MEETING LINK</h3>
+          <h3 style="color: #2e7d32; margin-top: 0;">🎥 LIVE NOTARY MEETING LINK - READY NOW!</h3>
           <div style="background: #fff; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #4caf50;">
-            <p style="margin: 0 0 10px 0; font-weight: bold; color: #2e7d32;">⏰ Meeting becomes active 15 minutes before your appointment time</p>
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #2e7d32;">✅ Your meeting link is ready and active now!</p>
             <p style="margin: 0 0 15px 0; font-size: 14px; color: #666;">
-              <strong>Scheduled:</strong> ${bookingData.appointment_date} at ${bookingData.appointment_time}
+              <strong>Scheduled for:</strong> ${formattedDateTime}
             </p>
             <a href="${meetingLink}" style="display: inline-block; background: #4caf50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Join Live Notary Meeting</a>
           </div>
@@ -261,8 +342,7 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #495057; margin-top: 0;">📅 APPOINTMENT DETAILS</h3>
           <ul style="list-style: none; padding: 0;">
-            <li><strong>Date:</strong> ${bookingData.appointment_date}</li>
-            <li><strong>Time:</strong> ${bookingData.appointment_time}</li>
+            <li><strong>Date & Time:</strong> ${formattedDateTime}</li>
             <li><strong>Service:</strong> ${bookingData.service_name}</li>
             <li><strong>Price:</strong> $${bookingData.price} (PAID)</li>
             <li><strong>Booking ID:</strong> ${bookingData.booking_id}</li>
@@ -296,7 +376,7 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
           <ul>
             <li>✅ <strong>Payment of $${bookingData.price} has been processed successfully</strong></li>
             <li>🎥 <strong>This is a LIVE video meeting with a licensed notary</strong></li>
-            <li>🔗 ${meetingLink ? 'Your meeting link is ready above - becomes active 15 minutes before appointment' : 'Meeting link will be sent 24 hours before your appointment'}</li>
+            <li>🔗 ${meetingLink ? 'Your meeting link is ready above and active NOW!' : 'Meeting link will be provided with this confirmation'}</li>
             <li>⏰ <strong>Please join 5 minutes early for technical checks</strong></li>
             <li>🆔 <strong>Have both photo IDs ready to show on camera</strong></li>
             <li>📄 <strong>Original documents must be physically present</strong></li>
@@ -320,6 +400,9 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
 };
 
 const createMeetingLinkEmail = (bookingData, meetingLink) => {
+  // Format the appointment date and time for Jacksonville, FL timezone
+  const formattedDateTime = formatDateTimeForJacksonville(bookingData.appointment_date, bookingData.appointment_time);
+  
   return {
     to: [bookingData.email, 'remotenotaryfl@remotenotaryfl.com', 'remotenotaryfl@gmail.com'], // Send to client and both business emails
     from: 'remotenotaryfl@remotenotaryfl.com',
@@ -330,7 +413,7 @@ const createMeetingLinkEmail = (bookingData, meetingLink) => {
         
         <p>Dear ${bookingData.client_name},</p>
         
-        <p>Your notarization appointment is tomorrow! Here's your secure meeting link:</p>
+        <p>Your notarization appointment is coming up! Here's your secure meeting link:</p>
         
         <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
           <h3 style="color: #2e7d32; margin-top: 0;">🔗 MEETING LINK</h3>
@@ -344,8 +427,7 @@ const createMeetingLinkEmail = (bookingData, meetingLink) => {
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #495057; margin-top: 0;">📅 APPOINTMENT DETAILS</h3>
           <ul style="list-style: none; padding: 0;">
-            <li><strong>Date:</strong> ${bookingData.appointment_date}</li>
-            <li><strong>Time:</strong> ${bookingData.appointment_time}</li>
+            <li><strong>Date & Time:</strong> ${formattedDateTime}</li>
             <li><strong>Document Type:</strong> ${bookingData.document_type}</li>
           </ul>
         </div>
