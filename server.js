@@ -132,6 +132,68 @@ const getProofMeetingLink = async (transactionId) => {
 
 // Email templates
 
+const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
+  return {
+    to: 'remotenotaryfl@gmail.com',
+    from: process.env.SENDGRID_FROM_EMAIL || 'remotenotaryfl@gmail.com',
+    subject: `🔔 NEW BOOKING ALERT - ${bookingData.client_name} - ${bookingData.booking_id}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #28a745; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+          <h2 style="margin: 0;">🎉 NEW BOOKING RECEIVED!</h2>
+          <p style="margin: 10px 0 0 0; font-size: 16px;">Someone just scheduled a meeting with you</p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 25px; border-radius: 0 0 8px 8px;">
+          <h3 style="color: #dc3545; margin-top: 0;">📋 BOOKING DETAILS</h3>
+          <div style="background: white; padding: 20px; border-radius: 8px; margin: 15px 0;">
+            <ul style="list-style: none; padding: 0; margin: 0;">
+              <li style="margin: 10px 0;"><strong>👤 Client:</strong> ${bookingData.client_name}</li>
+              <li style="margin: 10px 0;"><strong>📧 Email:</strong> ${bookingData.email}</li>
+              <li style="margin: 10px 0;"><strong>📞 Phone:</strong> ${bookingData.phone || 'Not provided'}</li>
+              <li style="margin: 10px 0;"><strong>📅 Date:</strong> ${bookingData.appointment_date}</li>
+              <li style="margin: 10px 0;"><strong>⏰ Time:</strong> ${bookingData.appointment_time}</li>
+              <li style="margin: 10px 0;"><strong>💼 Service:</strong> ${bookingData.service_name}</li>
+              <li style="margin: 10px 0;"><strong>💰 Amount:</strong> $${bookingData.price} (PAID)</li>
+              <li style="margin: 10px 0;"><strong>🆔 Booking ID:</strong> ${bookingData.booking_id}</li>
+            </ul>
+          </div>
+          
+          ${bookingData.special_requests ? `
+          <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ff9800;">
+            <h4 style="color: #f57c00; margin: 0 0 10px 0;">📝 Special Requests:</h4>
+            <p style="margin: 0; font-style: italic;">${bookingData.special_requests}</p>
+          </div>
+          ` : ''}
+          
+          ${meetingLink ? `
+          <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center;">
+            <h4 style="color: #2e7d32; margin: 0 0 10px 0;">🎥 Meeting Link Ready</h4>
+            <a href="${meetingLink}" style="display: inline-block; background: #4caf50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Join Meeting</a>
+          </div>
+          ` : ''}
+          
+          <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0;">
+            <h4 style="color: #1976d2; margin: 0 0 10px 0;">⏰ Next Steps:</h4>
+            <ul style="margin: 0; padding-left: 20px;">
+              <li>Client will receive their confirmation email automatically</li>
+              <li>Meeting link is active 15 minutes before appointment</li>
+              <li>Client will upload documents via Proof.com</li>
+              <li>Be ready to join the meeting at scheduled time</li>
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px;">
+            <p style="color: #6c757d; font-size: 14px;">
+              Booking confirmed at ${new Date().toLocaleString()}
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  };
+};
+
 const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusinessCopy = false) => {
   const meetingLinkSection = meetingLink ? `
             <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
@@ -291,6 +353,11 @@ app.post('/send-booking-confirmation', async (req, res) => {
     
     await sgMail.send(emailData);
     
+    // Send business notification email
+    const businessNotificationData = createBusinessNotificationEmail(bookingData);
+    await sgMail.send(businessNotificationData);
+    console.log('Business notification email sent to remotenotaryfl@gmail.com');
+    
     res.json({ 
       success: true, 
       message: 'Booking confirmation email sent successfully' 
@@ -421,9 +488,10 @@ app.post('/confirm-payment', async (req, res) => {
         console.log(`Confirmation email sent to: ${email}`);
       }
       
-      // Send copy to business
-      const businessEmailData = createBookingConfirmationEmail(booking_data, meetingLink, true);
-      await sgMail.send(businessEmailData);
+      // Send business notification email
+      const businessNotificationData = createBusinessNotificationEmail(booking_data, meetingLink);
+      await sgMail.send(businessNotificationData);
+      console.log('Business notification email sent to remotenotaryfl@gmail.com');
       
       res.json({
         success: true,
