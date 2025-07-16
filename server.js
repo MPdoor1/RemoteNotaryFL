@@ -5,6 +5,7 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const sgMail = require('@sendgrid/mail');
+const { google } = require('googleapis');
 // Initialize Stripe
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 if (!stripeSecretKey) {
@@ -121,6 +122,98 @@ const PROOF_API_HEADERS = {
   'Content-Type': 'application/json'
 };
 
+// Google Calendar configuration
+const googleCalendarClientId = process.env.GOOGLE_CLIENT_ID;
+const googleCalendarClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const googleCalendarRefreshToken = process.env.GOOGLE_REFRESH_TOKEN;
+const googleCalendarEmail = 'remotenotaryfl@gmail.com';
+
+if (!googleCalendarClientId || !googleCalendarClientSecret || !googleCalendarRefreshToken) {
+  console.warn('⚠️  Google Calendar credentials not found. Calendar integration will be disabled.');
+} else {
+  console.log('✅ Google Calendar integration configured successfully');
+}
+
+// Google Calendar helper functions
+const addToGoogleCalendar = async (bookingData) => {
+  if (!googleCalendarClientId || !googleCalendarClientSecret || !googleCalendarRefreshToken) {
+    console.log('Google Calendar credentials not available, skipping calendar event creation');
+    return null;
+  }
+
+  try {
+    // Set up OAuth2 client
+    const oauth2Client = new google.auth.OAuth2(
+      googleCalendarClientId,
+      googleCalendarClientSecret,
+      'https://developers.google.com/oauthplayground'
+    );
+
+    oauth2Client.setCredentials({
+      refresh_token: googleCalendarRefreshToken
+    });
+
+    // Create calendar instance
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    // Parse appointment date and time
+    const appointmentDateTime = new Date(`${bookingData.appointment_date} ${bookingData.appointment_time}`);
+    const endDateTime = new Date(appointmentDateTime.getTime() + (60 * 60 * 1000)); // 1 hour duration
+
+    // Create event
+    const event = {
+      summary: `${bookingData.service_name} - ${bookingData.client_name}`,
+      description: `Remote Notary Appointment
+      
+Client: ${bookingData.client_name}
+Email: ${bookingData.email}
+Phone: ${bookingData.phone}
+Service: ${bookingData.service_name}
+Booking ID: ${bookingData.booking_id}
+Special Requests: ${bookingData.special_requests || 'None'}
+
+This is a remote notary appointment conducted online.`,
+      start: {
+        dateTime: appointmentDateTime.toISOString(),
+        timeZone: 'America/New_York'
+      },
+      end: {
+        dateTime: endDateTime.toISOString(),
+        timeZone: 'America/New_York'
+      },
+      attendees: [
+        {
+          email: googleCalendarEmail,
+          responseStatus: 'accepted'
+        },
+        {
+          email: bookingData.email,
+          responseStatus: 'needsAction'
+        }
+      ],
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'email', minutes: 60 },
+          { method: 'popup', minutes: 15 }
+        ]
+      }
+    };
+
+    const response = await calendar.events.insert({
+      calendarId: 'primary',
+      resource: event,
+      sendUpdates: 'all'
+    });
+
+    console.log('📅 Calendar event created:', response.data.htmlLink);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to create calendar event:', error.message);
+    return null;
+  }
+};
+
 // Proof API helper functions
 // Function to parse multiple email addresses
 const parseEmailAddresses = (emailString) => {
@@ -235,6 +328,9 @@ const getProofMeetingLink = async (transactionId) => {
 const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
   // Format the appointment date and time for Jacksonville, FL timezone
   const formattedDateTime = formatDateTimeForJacksonville(bookingData.appointment_date, bookingData.appointment_time);
+  const formattedDate = formatDateForJacksonville(bookingData.appointment_date);
+  const formattedTime = formatTimeForJacksonville(bookingData.appointment_time);
+  const cleanDateTime = `${formattedDate} at ${formattedTime}`;
   
   return {
     to: 'remotenotaryfl@gmail.com', // Send to Gmail only (single email)
@@ -254,7 +350,7 @@ const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
               <li style="margin: 10px 0;"><strong>👤 Client:</strong> ${bookingData.client_name}</li>
               <li style="margin: 10px 0;"><strong>📧 Email:</strong> ${bookingData.email}</li>
               <li style="margin: 10px 0;"><strong>📞 Phone:</strong> ${bookingData.phone || 'Not provided'}</li>
-              <li style="margin: 10px 0;"><strong>📅 Date & Time:</strong> ${formattedDateTime}</li>
+              <li style="margin: 10px 0;"><strong>📅 Date & Time:</strong> ${cleanDateTime}</li>
               <li style="margin: 10px 0;"><strong>💼 Service:</strong> ${bookingData.service_name}</li>
               <li style="margin: 10px 0;"><strong>💰 Amount:</strong> $${bookingData.price} (PAID)</li>
               <li style="margin: 10px 0;"><strong>🆔 Booking ID:</strong> ${bookingData.booking_id}</li>
@@ -302,13 +398,24 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
   const formattedDate = formatDateForJacksonville(bookingData.appointment_date);
   const formattedTime = formatTimeForJacksonville(bookingData.appointment_time);
   
+  // Create a cleaner time display for emails
+  const cleanDateTime = `${formattedDate} at ${formattedTime}`;
+  
+  console.log('Email formatting:', {
+    original_date: bookingData.appointment_date,
+    original_time: bookingData.appointment_time,
+    formatted_date: formattedDate,
+    formatted_time: formattedTime,
+    clean_datetime: cleanDateTime
+  });
+  
   const meetingLinkSection = meetingLink ? `
             <div style="background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
           <h3 style="color: #2e7d32; margin-top: 0;">🎥 LIVE NOTARY MEETING LINK - READY NOW!</h3>
           <div style="background: #fff; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #4caf50;">
             <p style="margin: 0 0 10px 0; font-weight: bold; color: #2e7d32;">✅ Your meeting link is ready and active now!</p>
             <p style="margin: 0 0 15px 0; font-size: 14px; color: #666;">
-              <strong>Scheduled for:</strong> ${formattedDateTime}
+              <strong>Scheduled for:</strong> ${cleanDateTime}
             </p>
             <a href="${meetingLink}" style="display: inline-block; background: #4caf50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Join Live Notary Meeting</a>
           </div>
@@ -342,7 +449,7 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #495057; margin-top: 0;">📅 APPOINTMENT DETAILS</h3>
           <ul style="list-style: none; padding: 0;">
-            <li><strong>Date & Time:</strong> ${formattedDateTime}</li>
+            <li><strong>Date & Time:</strong> ${cleanDateTime}</li>
             <li><strong>Service:</strong> ${bookingData.service_name}</li>
             <li><strong>Price:</strong> $${bookingData.price} (PAID)</li>
             <li><strong>Booking ID:</strong> ${bookingData.booking_id}</li>
@@ -402,6 +509,9 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
 const createMeetingLinkEmail = (bookingData, meetingLink) => {
   // Format the appointment date and time for Jacksonville, FL timezone
   const formattedDateTime = formatDateTimeForJacksonville(bookingData.appointment_date, bookingData.appointment_time);
+  const formattedDate = formatDateForJacksonville(bookingData.appointment_date);
+  const formattedTime = formatTimeForJacksonville(bookingData.appointment_time);
+  const cleanDateTime = `${formattedDate} at ${formattedTime}`;
   
   return {
     to: [bookingData.email, 'remotenotaryfl@gmail.com'], // Send to client and Gmail only
@@ -427,7 +537,7 @@ const createMeetingLinkEmail = (bookingData, meetingLink) => {
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #495057; margin-top: 0;">📅 APPOINTMENT DETAILS</h3>
           <ul style="list-style: none; padding: 0;">
-            <li><strong>Date & Time:</strong> ${formattedDateTime}</li>
+            <li><strong>Date & Time:</strong> ${cleanDateTime}</li>
             <li><strong>Document Type:</strong> ${bookingData.document_type}</li>
           </ul>
         </div>
@@ -624,6 +734,18 @@ app.post('/confirm-payment', async (req, res) => {
         console.log('Using fallback meeting link:', meetingLink);
       }
       
+      // Add to Google Calendar
+      let calendarEvent = null;
+      try {
+        calendarEvent = await addToGoogleCalendar(booking_data);
+        if (calendarEvent) {
+          console.log('✅ Event added to Google Calendar successfully');
+        }
+      } catch (calendarError) {
+        console.error('❌ Failed to add to Google Calendar:', calendarError.message);
+        // Don't fail the entire booking if calendar fails
+      }
+      
       // Send booking confirmation to primary client email only
       const emails = parseEmailAddresses(booking_data.email);
       const primaryEmail = emails[0]; // Get first/primary email only
@@ -667,6 +789,7 @@ app.post('/confirm-payment', async (req, res) => {
         payment_intent: paymentIntent,
         proof_transaction: proofTransaction,
         meeting_link: meetingLink,
+        calendar_event: calendarEvent,
         email_status: {
           success_count: emailSuccessCount,
           errors: emailErrors
