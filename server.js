@@ -134,8 +134,8 @@ const getProofMeetingLink = async (transactionId) => {
 
 const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
   return {
-    to: 'remotenotaryfl@gmail.com',
-    from: process.env.SENDGRID_FROM_EMAIL || 'remotenotaryfl@gmail.com',
+    to: ['remotenotaryfl@remotenotaryfl.com', 'remotenotaryfl@gmail.com'], // Send to both business and personal
+    from: process.env.SENDGRID_FROM_EMAIL || 'remotenotaryfl@remotenotaryfl.com',
     subject: `🔔 NEW BOOKING ALERT - ${bookingData.client_name} - ${bookingData.booking_id}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -295,7 +295,7 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
 
 const createMeetingLinkEmail = (bookingData, meetingLink) => {
   return {
-    to: [bookingData.email, 'remotenotaryfl@remotenotaryfl.com'], // Send to both client and business
+    to: [bookingData.email, 'remotenotaryfl@remotenotaryfl.com', 'remotenotaryfl@gmail.com'], // Send to client and both business emails
     from: process.env.SENDGRID_FROM_EMAIL || 'remotenotaryfl@remotenotaryfl.com',
     subject: `🔗 Your Notarization Meeting Link - ${bookingData.booking_id}`,
     html: `
@@ -356,7 +356,7 @@ app.post('/send-booking-confirmation', async (req, res) => {
     // Send business notification email
     const businessNotificationData = createBusinessNotificationEmail(bookingData);
     await sgMail.send(businessNotificationData);
-    console.log('Business notification email sent to remotenotaryfl@gmail.com');
+    console.log('Business notification email sent to remotenotaryfl@remotenotaryfl.com and remotenotaryfl@gmail.com');
     
     res.json({ 
       success: true, 
@@ -491,7 +491,7 @@ app.post('/confirm-payment', async (req, res) => {
       // Send business notification email
       const businessNotificationData = createBusinessNotificationEmail(booking_data, meetingLink);
       await sgMail.send(businessNotificationData);
-      console.log('Business notification email sent to remotenotaryfl@gmail.com');
+      console.log('Business notification email sent to remotenotaryfl@remotenotaryfl.com and remotenotaryfl@gmail.com');
       
       res.json({
         success: true,
