@@ -83,7 +83,7 @@ IMPORTANT: You must upload your documents before the meeting. Use the link provi
 
 You will meet with a licensed notary via video call. Please have your valid government-issued photo ID ready. The meeting link will become active 15 minutes before your scheduled time.
 
-For technical support, contact remotenotaryfl@remotenotaryfl.com`,
+For technical support, contact remotenotaryfl@gmail.com`,
       message_signature: "Remote Notary FL - Licensed Notary Services"
     };
 
