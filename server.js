@@ -2,7 +2,16 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const sgMail = require('@sendgrid/mail');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// Initialize Stripe
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  console.error('❌ STRIPE_SECRET_KEY not found in environment variables. Payments will fail.');
+} else if (!stripeSecretKey.startsWith('sk_')) {
+  console.warn('⚠️  STRIPE_SECRET_KEY does not start with "sk_" - this may cause payment processing to fail.');
+} else {
+  console.log('✅ Stripe API key configured successfully');
+}
+const stripe = require('stripe')(stripeSecretKey);
 const axios = require('axios');
 
 const app = express();
@@ -16,12 +25,26 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize SendGrid
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const sendGridApiKey = process.env.SENDGRID_API_KEY;
+if (!sendGridApiKey) {
+  console.warn('⚠️  SENDGRID_API_KEY not found in environment variables. Email notifications will fail.');
+} else if (!sendGridApiKey.startsWith('SG.')) {
+  console.warn('⚠️  SENDGRID_API_KEY does not start with "SG." - this may cause email sending to fail.');
+} else {
+  console.log('✅ SendGrid API key configured successfully');
+}
+sgMail.setApiKey(sendGridApiKey);
 
 // Proof API configuration
 const PROOF_API_BASE_URL = 'https://api.proof.com/v1';
+const proofApiKey = process.env.PROOF_API_KEY;
+if (!proofApiKey) {
+  console.warn('⚠️  PROOF_API_KEY not found in environment variables. Proof.com integration will use fallback links.');
+} else {
+  console.log('✅ Proof API key configured successfully');
+}
 const PROOF_API_HEADERS = {
-  'ApiKey': process.env.PROOF_API_KEY,
+  'ApiKey': proofApiKey,
   'Content-Type': 'application/json'
 };
 
@@ -351,22 +374,61 @@ app.post('/send-booking-confirmation', async (req, res) => {
     const bookingData = req.body;
     const emailData = createBookingConfirmationEmail(bookingData);
     
-    await sgMail.send(emailData);
+    let emailSuccessCount = 0;
+    let emailErrors = [];
+    
+    // Send client confirmation email
+    try {
+      await sgMail.send(emailData);
+      console.log('Client confirmation email sent successfully');
+      emailSuccessCount++;
+    } catch (clientEmailError) {
+      console.error('Failed to send client confirmation email:', clientEmailError.message);
+      emailErrors.push(`Failed to send client email: ${clientEmailError.message}`);
+    }
     
     // Send business notification email
-    const businessNotificationData = createBusinessNotificationEmail(bookingData);
-    await sgMail.send(businessNotificationData);
-    console.log('Business notification email sent to remotenotaryfl@remotenotaryfl.com and remotenotaryfl@gmail.com');
+    try {
+      const businessNotificationData = createBusinessNotificationEmail(bookingData);
+      await sgMail.send(businessNotificationData);
+      console.log('Business notification email sent to remotenotaryfl@remotenotaryfl.com and remotenotaryfl@gmail.com');
+      emailSuccessCount++;
+    } catch (businessEmailError) {
+      console.error('Failed to send business notification email:', businessEmailError.message);
+      emailErrors.push(`Failed to send business notification: ${businessEmailError.message}`);
+    }
     
-    res.json({ 
-      success: true, 
-      message: 'Booking confirmation email sent successfully' 
-    });
+    // Return success if at least one email was sent, or partial success message
+    if (emailSuccessCount > 0) {
+      let message = `${emailSuccessCount} email(s) sent successfully`;
+      if (emailErrors.length > 0) {
+        message += `, but ${emailErrors.length} email(s) failed`;
+      }
+      
+      res.json({ 
+        success: true, 
+        message: message,
+        email_status: {
+          success_count: emailSuccessCount,
+          errors: emailErrors
+        }
+      });
+    } else {
+      // All emails failed
+      res.status(500).json({ 
+        success: false, 
+        message: 'All emails failed to send',
+        email_status: {
+          success_count: 0,
+          errors: emailErrors
+        }
+      });
+    }
   } catch (error) {
-    console.error('Error sending booking confirmation email:', error);
+    console.error('Error in booking confirmation endpoint:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to send booking confirmation email',
+      message: 'Failed to process booking confirmation',
       error: error.message 
     });
   }
@@ -481,24 +543,51 @@ app.post('/confirm-payment', async (req, res) => {
       const emails = parseEmailAddresses(booking_data.email);
       
       // Send booking confirmation with meeting link to all participants
+      let emailSuccessCount = 0;
+      let emailErrors = [];
+      
       for (const email of emails) {
-        const participantBookingData = { ...booking_data, email: email };
-        const clientEmailData = createBookingConfirmationEmail(participantBookingData, meetingLink, false);
-        await sgMail.send(clientEmailData);
-        console.log(`Confirmation email sent to: ${email}`);
+        try {
+          const participantBookingData = { ...booking_data, email: email };
+          const clientEmailData = createBookingConfirmationEmail(participantBookingData, meetingLink, false);
+          await sgMail.send(clientEmailData);
+          console.log(`Confirmation email sent to: ${email}`);
+          emailSuccessCount++;
+        } catch (emailError) {
+          console.error(`Failed to send confirmation email to ${email}:`, emailError.message);
+          emailErrors.push(`Failed to send email to ${email}: ${emailError.message}`);
+        }
       }
       
       // Send business notification email
-      const businessNotificationData = createBusinessNotificationEmail(booking_data, meetingLink);
-      await sgMail.send(businessNotificationData);
-      console.log('Business notification email sent to remotenotaryfl@remotenotaryfl.com and remotenotaryfl@gmail.com');
+      try {
+        const businessNotificationData = createBusinessNotificationEmail(booking_data, meetingLink);
+        await sgMail.send(businessNotificationData);
+        console.log('Business notification email sent to remotenotaryfl@remotenotaryfl.com and remotenotaryfl@gmail.com');
+      } catch (businessEmailError) {
+        console.error('Failed to send business notification email:', businessEmailError.message);
+        emailErrors.push(`Failed to send business notification: ${businessEmailError.message}`);
+      }
+      
+      // Create response message based on email success/failure
+      let responseMessage = 'Payment confirmed and booking created successfully';
+      if (emailSuccessCount > 0) {
+        responseMessage += `, ${emailSuccessCount} confirmation email(s) sent`;
+      }
+      if (emailErrors.length > 0) {
+        responseMessage += `, but ${emailErrors.length} email(s) failed to send`;
+      }
       
       res.json({
         success: true,
-        message: 'Payment confirmed, booking email sent with meeting link, and notarization transaction created',
+        message: responseMessage,
         payment_intent: paymentIntent,
         proof_transaction: proofTransaction,
-        meeting_link: meetingLink
+        meeting_link: meetingLink,
+        email_status: {
+          success_count: emailSuccessCount,
+          errors: emailErrors
+        }
       });
     } else {
       res.status(400).json({
