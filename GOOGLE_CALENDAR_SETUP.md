@@ -54,14 +54,14 @@ Add these environment variables to your Azure App Service:
 2. Add these new application settings:
 
 ```
-GOOGLE_CLIENT_ID=your_client_id_here
+GOOGLE_CLIENT_ID=815868300796-hr7mcego674m05i67dbkk27b67fd6icl.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_client_secret_here
 GOOGLE_REFRESH_TOKEN=your_refresh_token_here
 ```
 
 ### For Local Development (.env file):
 ```
-GOOGLE_CLIENT_ID=your_client_id_here
+GOOGLE_CLIENT_ID=815868300796-hr7mcego674m05i67dbkk27b67fd6icl.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your_client_secret_here
 GOOGLE_REFRESH_TOKEN=your_refresh_token_here
 ```
