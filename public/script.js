@@ -145,12 +145,7 @@ async function processStripePayment(booking) {
                         email: booking.allEmails, // Send all emails to server
                         phone: booking.phone,
                         booking_id: booking.id,
-                        appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                        }),
+                        appointment_date: formatBookingDate(booking.date),
                         appointment_time: booking.timeDisplay,
                         service_type: booking.serviceType,
                         service_name: booking.serviceName,
@@ -281,18 +276,27 @@ function selectTimeSlot(element) {
     element.classList.add('selected');
 }
 
+// Helper function to format date without timezone issues
+function formatBookingDate(dateString) {
+    // Parse the date string (YYYY-MM-DD) manually to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(num => parseInt(num, 10));
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    
+    return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
 // Email Templates and Functions
 async function sendBookingConfirmationEmail(booking) {
     const emailData = {
         email: booking.email,
         client_name: booking.name,
         booking_id: booking.id,
-        appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }),
+        appointment_date: formatBookingDate(booking.date),
         appointment_time: booking.timeDisplay,
         service_type: booking.serviceType,
         service_name: booking.serviceName || booking.serviceType,
@@ -332,12 +336,7 @@ async function sendMeetingLinkEmail(booking, meetingLink) {
         email: booking.email,
         client_name: booking.name,
         booking_id: booking.id,
-        appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }),
+        appointment_date: formatBookingDate(booking.date),
         appointment_time: booking.timeDisplay,
         document_type: booking.documentType.replace('-', ' ').toUpperCase()
     };
@@ -374,12 +373,7 @@ function sendReminderEmail(booking) {
         to_email: booking.email,
         client_name: booking.name,
         booking_id: booking.id,
-        appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }),
+        appointment_date: formatBookingDate(booking.date),
         appointment_time: booking.timeDisplay,
         service_type: booking.serviceType,
         service_name: booking.serviceName || booking.serviceType,
@@ -432,7 +426,7 @@ async function showBookingConfirmation(booking) {
         const confirmationMessage = `
             🎉 Appointment Scheduled Successfully!
             
-            📅 Date: ${new Date(booking.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            📅 Date: ${formatBookingDate(booking.date)}
             ⏰ Time: ${booking.timeDisplay}
             📋 Document: ${booking.documentType.replace('-', ' ').toUpperCase()}
             💰 Price: $${booking.price}
@@ -692,7 +686,7 @@ function displayRecentBookings() {
     bookingsList.innerHTML = sortedBookings.map(booking => `
         <div class="booking-item">
             <h4>${booking.name} - ${booking.serviceName || booking.serviceType || 'Service'}</h4>
-            <p><strong>Date:</strong> ${new Date(booking.date).toLocaleDateString()} at ${booking.timeDisplay}</p>
+            <p><strong>Date:</strong> ${formatBookingDate(booking.date)} at ${booking.timeDisplay}</p>
             <p><strong>Email:</strong> ${booking.email} | <strong>Phone:</strong> ${booking.phone}</p>
             <p><strong>Price:</strong> $${booking.price} | <strong>Status:</strong> ${booking.status}</p>
             <p><strong>Booking ID:</strong> ${booking.id}</p>
@@ -793,12 +787,7 @@ async function sendMeetingLinkToBooking(bookingId) {
                     email: booking.email,
                     client_name: booking.name,
                     booking_id: booking.id,
-                    appointment_date: new Date(booking.date).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    }),
+                    appointment_date: formatBookingDate(booking.date),
                     appointment_time: booking.timeDisplay,
                     service_type: booking.serviceType,
                     service_name: booking.serviceName || booking.serviceType
