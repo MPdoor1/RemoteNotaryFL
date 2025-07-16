@@ -237,7 +237,7 @@ const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
   const formattedDateTime = formatDateTimeForJacksonville(bookingData.appointment_date, bookingData.appointment_time);
   
   return {
-    to: ['remotenotaryfl@remotenotaryfl.com', 'remotenotaryfl@gmail.com'], // Send to both business and personal
+    to: 'remotenotaryfl@gmail.com', // Send to Gmail only (single email)
     from: 'remotenotaryfl@remotenotaryfl.com',
     subject: `🔔 NEW BOOKING ALERT - ${bookingData.client_name} - ${bookingData.booking_id}`,
     html: `
@@ -404,7 +404,7 @@ const createMeetingLinkEmail = (bookingData, meetingLink) => {
   const formattedDateTime = formatDateTimeForJacksonville(bookingData.appointment_date, bookingData.appointment_time);
   
   return {
-    to: [bookingData.email, 'remotenotaryfl@remotenotaryfl.com', 'remotenotaryfl@gmail.com'], // Send to client and both business emails
+    to: [bookingData.email, 'remotenotaryfl@gmail.com'], // Send to client and Gmail only
     from: 'remotenotaryfl@remotenotaryfl.com',
     subject: `🔗 Your Notarization Meeting Link - ${bookingData.booking_id}`,
     html: `
@@ -476,7 +476,7 @@ app.post('/send-booking-confirmation', async (req, res) => {
     try {
       const businessNotificationData = createBusinessNotificationEmail(bookingData);
       await sgMail.send(businessNotificationData);
-      console.log('Business notification email sent to remotenotaryfl@remotenotaryfl.com and remotenotaryfl@gmail.com');
+      console.log('Business notification email sent to remotenotaryfl@gmail.com');
       emailSuccessCount++;
     } catch (businessEmailError) {
       console.error('Failed to send business notification email:', businessEmailError.message);
@@ -624,31 +624,29 @@ app.post('/confirm-payment', async (req, res) => {
         console.log('Using fallback meeting link:', meetingLink);
       }
       
-      // Parse multiple email addresses and send to all participants
+      // Send booking confirmation to primary client email only
       const emails = parseEmailAddresses(booking_data.email);
+      const primaryEmail = emails[0]; // Get first/primary email only
       
-      // Send booking confirmation with meeting link to all participants
       let emailSuccessCount = 0;
       let emailErrors = [];
       
-      for (const email of emails) {
-        try {
-          const participantBookingData = { ...booking_data, email: email };
-          const clientEmailData = createBookingConfirmationEmail(participantBookingData, meetingLink, false);
-          await sgMail.send(clientEmailData);
-          console.log(`Confirmation email sent to: ${email}`);
-          emailSuccessCount++;
-        } catch (emailError) {
-          console.error(`Failed to send confirmation email to ${email}:`, emailError.message);
-          emailErrors.push(`Failed to send email to ${email}: ${emailError.message}`);
-        }
+      // Send single confirmation email to primary client
+      try {
+        const clientEmailData = createBookingConfirmationEmail(booking_data, meetingLink, false);
+        await sgMail.send(clientEmailData);
+        console.log(`Confirmation email sent to: ${primaryEmail}`);
+        emailSuccessCount++;
+      } catch (emailError) {
+        console.error(`Failed to send confirmation email to ${primaryEmail}:`, emailError.message);
+        emailErrors.push(`Failed to send email to ${primaryEmail}: ${emailError.message}`);
       }
       
       // Send business notification email
       try {
         const businessNotificationData = createBusinessNotificationEmail(booking_data, meetingLink);
         await sgMail.send(businessNotificationData);
-        console.log('Business notification email sent to remotenotaryfl@remotenotaryfl.com and remotenotaryfl@gmail.com');
+        console.log('Business notification email sent to remotenotaryfl@gmail.com');
       } catch (businessEmailError) {
         console.error('Failed to send business notification email:', businessEmailError.message);
         emailErrors.push(`Failed to send business notification: ${businessEmailError.message}`);
