@@ -332,6 +332,29 @@
                 <span class="close" onclick="closeBookingModal()">&times;</span>
             </div>
             <div class="modal-body">
+                <!-- Security & Privacy Information -->
+                <div class="security-section">
+                    <div class="security-badges">
+                        <div class="security-badge">
+                            <span class="security-icon">🔒</span>
+                            <div class="security-text">
+                                <strong>256-bit SSL Encryption</strong>
+                                <small>Your data is protected with bank-level security</small>
+                            </div>
+                        </div>
+                        <div class="security-badge">
+                            <span class="security-icon">🛡️</span>
+                            <div class="security-text">
+                                <strong>We Never Share Your Info</strong>
+                                <small>Your personal information stays private</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="privacy-notice">
+                        <p><strong>🔐 Safe & Secure:</strong> All transactions are encrypted and processed through Stripe's secure payment system. We never store your payment information on our servers.</p>
+                    </div>
+                </div>
+
                 <form id="bookingForm">
                     <div class="form-group">
                         <label for="clientName">Full Name *</label>
@@ -347,6 +370,9 @@
                             </div>
                         </div>
                         <small style="color: #666; font-size: 12px;">The first email is used for payment billing. All emails will receive meeting invitations and notifications.</small>
+                        <div class="email-notice">
+                            <p><strong>📧 Important:</strong> Please check your spam folder for emails from our company and a second email from proof.com containing your meeting details and identity verification link.</p>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -380,26 +406,34 @@
                         <textarea id="specialRequests" name="specialRequests" rows="3" placeholder="Any special requirements or additional information..."></textarea>
                     </div>
                     
-                    <!-- Security & Privacy Information -->
-                    <div class="security-section">
-                        <div class="security-badges">
-                            <div class="security-badge">
-                                <span class="security-icon">🔒</span>
-                                <div class="security-text">
-                                    <strong>256-bit SSL Encryption</strong>
-                                    <small>Your data is protected with bank-level security</small>
-                                </div>
-                            </div>
-                            <div class="security-badge">
-                                <span class="security-icon">🛡️</span>
-                                <div class="security-text">
-                                    <strong>We Never Share Your Info</strong>
-                                    <small>Your personal information stays private</small>
-                                </div>
-                            </div>
+                    <!-- Customer Support Section -->
+                    <div class="customer-support-section">
+                        <div class="support-header">
+                            <h3>🆘 Need Help?</h3>
+                            <p>Having issues with signup, billing, or anything else? We're here to help!</p>
                         </div>
-                        <div class="privacy-notice">
-                            <p><strong>🔐 Safe & Secure:</strong> All transactions are encrypted and processed through Stripe's secure payment system. We never store your payment information on our servers.</p>
+                        <div class="support-options">
+                            <div class="support-option">
+                                <span class="support-icon">📧</span>
+                                <div class="support-text">
+                                    <strong>Email Support</strong>
+                                    <a href="mailto:remotenotaryfl@gmail.com">remotenotaryfl@gmail.com</a>
+                                </div>
+                            </div>
+                            <div class="support-option">
+                                <span class="support-icon">📱</span>
+                                <div class="support-text">
+                                    <strong>Text Message</strong>
+                                    <a href="sms:9046073835">(904) 607-3835</a>
+                                </div>
+                            </div>
+                            <div class="support-option">
+                                <span class="support-icon">📞</span>
+                                <div class="support-text">
+                                    <strong>Phone Call</strong>
+                                    <a href="tel:9046073835">(904) 607-3835</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     

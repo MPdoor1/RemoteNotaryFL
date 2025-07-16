@@ -893,17 +893,19 @@ header.scrolled {
 }
 
 .contact-item {
-    background: rgba(255, 255, 255, 0.05);
+    background: #ffffff;
     padding: 2rem;
     border-radius: 12px;
     border: 1px solid rgba(184, 134, 11, 0.2);
     transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .contact-item:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: #ffffff;
     border-color: rgba(184, 134, 11, 0.4);
     transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .contact-item h3 {
@@ -914,9 +916,21 @@ header.scrolled {
 }
 
 .contact-item p {
-    color: #ffffff;
+    color: #666666;
     font-size: 1.1rem;
     margin: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.contact-item a {
+    color: #666666;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.contact-item a:hover {
+    color: #B8860B;
 }
 
 /* Footer */
@@ -1815,6 +1829,128 @@ footer::before {
     }
     
     .security-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1.2rem;
+    }
+}
+
+/* Email Notice Styles */
+.email-notice {
+    background: linear-gradient(135deg, #fff8dc 0%, #ffeaa7 100%);
+    border: 2px solid #ff7675;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px 0;
+    box-shadow: 0 2px 10px rgba(255, 118, 117, 0.1);
+}
+
+.email-notice p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #2d3436;
+}
+
+/* Customer Support Section Styles */
+.customer-support-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #28a745;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.1);
+}
+
+.support-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.support-header h3 {
+    color: #28a745;
+    margin-bottom: 8px;
+    font-size: 1.3rem;
+}
+
+.support-header p {
+    color: #495057;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.support-options {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.support-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    min-width: 180px;
+}
+
+.support-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.support-icon {
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.support-text {
+    flex: 1;
+}
+
+.support-text strong {
+    color: #1a1a1a;
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.support-text a {
+    color: #28a745;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.3s ease;
+}
+
+.support-text a:hover {
+    color: #20c997;
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .support-options {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .support-option {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .support-icon {
         width: 35px;
         height: 35px;
         font-size: 1.2rem;
