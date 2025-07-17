@@ -21,15 +21,23 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Jacksonville, FL timezone handling
+// Jacksonville, FL timezone handling - Fixed timezone conversion
 const formatDateTimeForJacksonville = (dateString, timeString) => {
   try {
-    // Parse the date and time
-    const appointmentDateTime = new Date(`${dateString} ${timeString}`);
+    // Create date object without timezone conversion since the time is already in EST
+    const [year, month, day] = dateString.split('-').map(Number);
+    const [time, period] = timeString.includes('M') ? timeString.split(' ') : [timeString, null];
+    const [hours, minutes] = time.split(':').map(Number);
+    
+    let hour24 = hours;
+    if (period === 'PM' && hours !== 12) hour24 += 12;
+    if (period === 'AM' && hours === 12) hour24 = 0;
+    
+    // Create date in Eastern Time without conversion
+    const appointmentDate = new Date(year, month - 1, day, hour24, minutes || 0);
     
     // Format for Jacksonville, FL (Eastern Time)
     const options = {
-      timeZone: 'America/New_York', // Jacksonville, FL is in Eastern Time
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -39,7 +47,7 @@ const formatDateTimeForJacksonville = (dateString, timeString) => {
       hour12: true
     };
     
-    const formatted = appointmentDateTime.toLocaleString('en-US', options);
+    const formatted = appointmentDate.toLocaleString('en-US', options);
     return formatted + ' ET'; // Add Eastern Time indicator
   } catch (error) {
     console.error('Error formatting date/time:', error);
@@ -49,9 +57,10 @@ const formatDateTimeForJacksonville = (dateString, timeString) => {
 
 const formatDateForJacksonville = (dateString) => {
   try {
-    const date = new Date(dateString);
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
     const options = {
-      timeZone: 'America/New_York',
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -67,7 +76,6 @@ const formatDateForJacksonville = (dateString) => {
 const formatTimeForJacksonville = (timeString) => {
   try {
     // Parse time string (assumes format like "14:30" or "2:30 PM")
-    const today = new Date();
     const [time, period] = timeString.includes('M') ? timeString.split(' ') : [timeString, null];
     const [hours, minutes] = time.split(':').map(Number);
     
@@ -75,10 +83,11 @@ const formatTimeForJacksonville = (timeString) => {
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    const dateTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour24, minutes);
+    // Create time without timezone conversion
+    const today = new Date();
+    const dateTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour24, minutes || 0);
     
     const options = {
-      timeZone: 'America/New_York',
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
@@ -156,8 +165,18 @@ const addToGoogleCalendar = async (bookingData) => {
     // Create calendar instance
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-    // Parse appointment date and time
-    const appointmentDateTime = new Date(`${bookingData.appointment_date} ${bookingData.appointment_time}`);
+    // Parse appointment date and time - Handle EST timezone correctly
+    const [year, month, day] = bookingData.appointment_date.split('-').map(Number);
+    const [time, period] = bookingData.appointment_time.includes('M') ? 
+      bookingData.appointment_time.split(' ') : [bookingData.appointment_time, null];
+    const [hours, minutes] = time.split(':').map(Number);
+    
+    let hour24 = hours;
+    if (period === 'PM' && hours !== 12) hour24 += 12;
+    if (period === 'AM' && hours === 12) hour24 = 0;
+    
+    // Create date object in Eastern Time
+    const appointmentDateTime = new Date(year, month - 1, day, hour24, minutes || 0);
     const endDateTime = new Date(appointmentDateTime.getTime() + (60 * 60 * 1000)); // 1 hour duration
 
     // Create event
@@ -237,15 +256,22 @@ const createProofNotarization = async (bookingData) => {
     console.log('Parsed email addresses:', emails);
     
     // Parse the appointment date and time to create ISO date for activation
-    // Parse as Jacksonville, FL timezone (Eastern Time)
-    const appointmentDateTime = new Date(`${bookingData.appointment_date} ${bookingData.appointment_time}`);
+    // Handle EST timezone correctly without double conversion
+    const [year, month, day] = bookingData.appointment_date.split('-').map(Number);
+    const [time, period] = bookingData.appointment_time.includes('M') ? 
+      bookingData.appointment_time.split(' ') : [bookingData.appointment_time, null];
+    const [hours, minutes] = time.split(':').map(Number);
     
-    // Convert to Jacksonville timezone for proper handling
-    const easternTime = new Date(appointmentDateTime.toLocaleString("en-US", {timeZone: "America/New_York"}));
-    const activationTime = easternTime.toISOString();
+    let hour24 = hours;
+    if (period === 'PM' && hours !== 12) hour24 += 12;
+    if (period === 'AM' && hours === 12) hour24 = 0;
+    
+    // Create date object in Eastern Time
+    const appointmentDateTime = new Date(year, month - 1, day, hour24, minutes || 0);
+    const activationTime = appointmentDateTime.toISOString();
     
     // Set expiration to 2 hours after appointment time
-    const expirationDateTime = new Date(easternTime.getTime() + (2 * 60 * 60 * 1000));
+    const expirationDateTime = new Date(appointmentDateTime.getTime() + (2 * 60 * 60 * 1000));
     const expirationTime = expirationDateTime.toISOString();
 
     // Create signers for each email address
