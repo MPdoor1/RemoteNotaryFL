@@ -490,58 +490,30 @@ function calculateHoursUntilAppointment(booking) {
 }
 
 async function showBookingConfirmation(booking) {
-    // Send confirmation email
-    try {
-        const emailData = await sendBookingConfirmationEmail(booking);
+    // Emails are already sent by the server during payment confirmation
+    // No need to send duplicate emails here
+    
+    const confirmationMessage = `
+        🎉 Appointment Scheduled Successfully!
         
-        const confirmationMessage = `
-            🎉 Appointment Scheduled Successfully!
-            
-            📅 Date: ${emailData.appointment_date}
-            ⏰ Time: ${emailData.appointment_time}
-            📋 Service: ${emailData.service_name}
-            💰 Price: $${emailData.price} (PAID)
-            
-            📧 Confirmation email sent to: ${booking.email}
-            📱 Meeting link will be sent 24 hours before appointment
-            ⏰ Reminder email will be sent 1 hour before appointment
-            
-            Next Steps:
-            1. Check your email for confirmation details
-            2. You'll receive a secure meeting link via email
-            3. Have your ID and documents ready
-            4. Payment will be processed after the session
-            
-            Booking ID: ${booking.id}
-        `;
+        📅 Date: ${formatBookingDate(booking.date)}
+        ⏰ Time: ${booking.timeDisplay}
+        📋 Service: ${booking.serviceName}
+        💰 Price: $${booking.price} (PAID)
         
-        alert(confirmationMessage);
-    } catch (error) {
-        console.error('Error sending confirmation email:', error);
+        📧 Confirmation email sent to: ${booking.email}
+        📱 Meeting link included in confirmation email
+        ⏰ Reminder email will be sent 1 hour before appointment
         
-        const confirmationMessage = `
-            🎉 Appointment Scheduled Successfully!
-            
-            📅 Date: ${formatBookingDate(booking.date)}
-            ⏰ Time: ${booking.timeDisplay}
-            📋 Document: ${booking.documentType ? booking.documentType.replace('-', ' ').toUpperCase() : 'N/A'}
-            💰 Price: $${booking.price}
-            
-            ⚠️ Email notification failed, but booking is confirmed
-            📱 Meeting link will be sent 24 hours before appointment
-            ⏰ Reminder email will be sent 1 hour before appointment
-            
-            Next Steps:
-            1. Please note down your booking details
-            2. You'll receive a secure meeting link via email
-            3. Have your ID and documents ready
-            4. Payment will be processed after the session
-            
-            Booking ID: ${booking.id}
-        `;
+        Next Steps:
+        1. Check your email for confirmation details and meeting link
+        2. Have your ID and documents ready
+        3. Join meeting 5 minutes early for technical checks
         
-        alert(confirmationMessage);
-    }
+        Booking ID: ${booking.id}
+    `;
+    
+    alert(confirmationMessage);
 }
 
 // Wait for DOM to load before setting up event listeners
