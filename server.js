@@ -24,8 +24,19 @@ const PORT = process.env.PORT || 3000;
 // Jacksonville, FL timezone handling - Fixed timezone conversion
 const formatDateTimeForJacksonville = (dateString, timeString) => {
   try {
-    // Create date object without timezone conversion since the time is already in EST
-    const [year, month, day] = dateString.split('-').map(Number);
+    // Handle both "YYYY-MM-DD" and "Day, Month DD, YYYY" formats
+    let appointmentDate;
+    
+    if (dateString.includes(',')) {
+      // Handle "Thursday, July 17, 2025" format
+      appointmentDate = new Date(dateString);
+    } else {
+      // Handle "YYYY-MM-DD" format
+      const [year, month, day] = dateString.split('-').map(Number);
+      appointmentDate = new Date(year, month - 1, day);
+    }
+    
+    // Parse time
     const [time, period] = timeString.includes('M') ? timeString.split(' ') : [timeString, null];
     const [hours, minutes] = time.split(':').map(Number);
     
@@ -33,8 +44,8 @@ const formatDateTimeForJacksonville = (dateString, timeString) => {
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    // Create date in Eastern Time without conversion
-    const appointmentDate = new Date(year, month - 1, day, hour24, minutes || 0);
+    // Set time on the date
+    appointmentDate.setHours(hour24, minutes || 0, 0, 0);
     
     // Format for Jacksonville, FL (Eastern Time)
     const options = {
@@ -57,8 +68,17 @@ const formatDateTimeForJacksonville = (dateString, timeString) => {
 
 const formatDateForJacksonville = (dateString) => {
   try {
-    const [year, month, day] = dateString.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
+    // Handle both "YYYY-MM-DD" and "Day, Month DD, YYYY" formats
+    let date;
+    
+    if (dateString.includes(',')) {
+      // Handle "Thursday, July 17, 2025" format
+      date = new Date(dateString);
+    } else {
+      // Handle "YYYY-MM-DD" format
+      const [year, month, day] = dateString.split('-').map(Number);
+      date = new Date(year, month - 1, day);
+    }
     
     const options = {
       weekday: 'long',
@@ -166,7 +186,17 @@ const addToGoogleCalendar = async (bookingData) => {
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
     // Parse appointment date and time - Handle EST timezone correctly
-    const [year, month, day] = bookingData.appointment_date.split('-').map(Number);
+    let appointmentDateTime;
+    
+    if (bookingData.appointment_date.includes(',')) {
+      // Handle "Thursday, July 17, 2025" format
+      appointmentDateTime = new Date(bookingData.appointment_date);
+    } else {
+      // Handle "YYYY-MM-DD" format
+      const [year, month, day] = bookingData.appointment_date.split('-').map(Number);
+      appointmentDateTime = new Date(year, month - 1, day);
+    }
+    
     const [time, period] = bookingData.appointment_time.includes('M') ? 
       bookingData.appointment_time.split(' ') : [bookingData.appointment_time, null];
     const [hours, minutes] = time.split(':').map(Number);
@@ -175,8 +205,8 @@ const addToGoogleCalendar = async (bookingData) => {
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    // Create date object in Eastern Time
-    const appointmentDateTime = new Date(year, month - 1, day, hour24, minutes || 0);
+    // Set time on the date
+    appointmentDateTime.setHours(hour24, minutes || 0, 0, 0);
     const endDateTime = new Date(appointmentDateTime.getTime() + (60 * 60 * 1000)); // 1 hour duration
 
     // Create event
@@ -257,7 +287,17 @@ const createProofNotarization = async (bookingData) => {
     
     // Parse the appointment date and time to create ISO date for activation
     // Handle EST timezone correctly without double conversion
-    const [year, month, day] = bookingData.appointment_date.split('-').map(Number);
+    let appointmentDateTime;
+    
+    if (bookingData.appointment_date.includes(',')) {
+      // Handle "Thursday, July 17, 2025" format
+      appointmentDateTime = new Date(bookingData.appointment_date);
+    } else {
+      // Handle "YYYY-MM-DD" format
+      const [year, month, day] = bookingData.appointment_date.split('-').map(Number);
+      appointmentDateTime = new Date(year, month - 1, day);
+    }
+    
     const [time, period] = bookingData.appointment_time.includes('M') ? 
       bookingData.appointment_time.split(' ') : [bookingData.appointment_time, null];
     const [hours, minutes] = time.split(':').map(Number);
@@ -266,8 +306,8 @@ const createProofNotarization = async (bookingData) => {
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    // Create date object in Eastern Time
-    const appointmentDateTime = new Date(year, month - 1, day, hour24, minutes || 0);
+    // Set time on the date
+    appointmentDateTime.setHours(hour24, minutes || 0, 0, 0);
     const activationTime = appointmentDateTime.toISOString();
     
     // Set expiration to 2 hours after appointment time
