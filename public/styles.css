@@ -59,6 +59,8 @@ header.scrolled {
     width: 2.5rem;
     height: 2.5rem;
     transition: all 0.3s ease;
+    display: inline-block;
+    flex-shrink: 0;
 }
 
 .logo:hover {
