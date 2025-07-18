@@ -36,7 +36,7 @@ const formatDateTimeForJacksonville = (dateString, timeString) => {
       appointmentDate = new Date(year, month - 1, day);
     }
     
-    // Parse time
+    // Parse time (assume EST input)
     const [time, period] = timeString.includes('M') ? timeString.split(' ') : [timeString, null];
     const [hours, minutes] = time.split(':').map(Number);
     
@@ -47,7 +47,7 @@ const formatDateTimeForJacksonville = (dateString, timeString) => {
     // Set time on the date
     appointmentDate.setHours(hour24, minutes || 0, 0, 0);
     
-    // Format for Jacksonville, FL (Eastern Time)
+    // Format for Jacksonville, FL (Eastern Time) with proper timezone handling
     const options = {
       weekday: 'long',
       year: 'numeric',
@@ -55,11 +55,18 @@ const formatDateTimeForJacksonville = (dateString, timeString) => {
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
+      timeZone: 'America/New_York'
     };
     
     const formatted = appointmentDate.toLocaleString('en-US', options);
-    return formatted + ' ET'; // Add Eastern Time indicator
+    
+    // Determine if we're in EST or EDT
+    const estOffset = appointmentDate.getTimezoneOffset();
+    const isEDT = estOffset === 240; // EDT is UTC-4 (240 minutes)
+    const timeZoneAbbr = isEDT ? 'EDT' : 'EST';
+    
+    return formatted + ` ${timeZoneAbbr}`;
   } catch (error) {
     console.error('Error formatting date/time:', error);
     return `${dateString} at ${timeString} ET`;
@@ -84,7 +91,8 @@ const formatDateForJacksonville = (dateString) => {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'America/New_York'
     };
     return date.toLocaleDateString('en-US', options);
   } catch (error) {
@@ -103,17 +111,25 @@ const formatTimeForJacksonville = (timeString) => {
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    // Create time without timezone conversion
+    // Create time with proper timezone handling
     const today = new Date();
     const dateTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour24, minutes || 0);
     
     const options = {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
+      timeZone: 'America/New_York'
     };
     
-    return dateTime.toLocaleTimeString('en-US', options) + ' ET';
+    const formattedTime = dateTime.toLocaleTimeString('en-US', options);
+    
+    // Determine if we're in EST or EDT
+    const estOffset = dateTime.getTimezoneOffset();
+    const isEDT = estOffset === 240; // EDT is UTC-4 (240 minutes)
+    const timeZoneAbbr = isEDT ? 'EDT' : 'EST';
+    
+    return formattedTime + ` ${timeZoneAbbr}`;
   } catch (error) {
     console.error('Error formatting time:', error);
     return timeString + ' ET';
@@ -205,9 +221,17 @@ const addToGoogleCalendar = async (bookingData) => {
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    // Set time on the date
+    // Set time on the date - ensure it's interpreted as EST
     appointmentDateTime.setHours(hour24, minutes || 0, 0, 0);
-    const endDateTime = new Date(appointmentDateTime.getTime() + (60 * 60 * 1000)); // 1 hour duration
+    
+    // Create a proper EST date by formatting the date/time in EST and then parsing it
+    const estDateString = appointmentDateTime.toLocaleDateString('en-CA', {timeZone: 'America/New_York'});
+    const estTimeString = appointmentDateTime.toLocaleTimeString('en-GB', {timeZone: 'America/New_York', hour12: false});
+    const estISOString = `${estDateString}T${estTimeString}`;
+    
+    // Create the final EST datetime
+    const estDateTime = new Date(estISOString);
+    const endDateTime = new Date(estDateTime.getTime() + (60 * 60 * 1000)); // 1 hour duration
 
     // Create event
     const event = {
@@ -223,7 +247,7 @@ Special Requests: ${bookingData.special_requests || 'None'}
 
 This is a remote notary appointment conducted online.`,
       start: {
-        dateTime: appointmentDateTime.toISOString(),
+        dateTime: estDateTime.toISOString(),
         timeZone: 'America/New_York'
       },
       end: {
@@ -306,12 +330,20 @@ const createProofNotarization = async (bookingData) => {
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    // Set time on the date
+    // Set time on the date - ensure proper EST timezone handling
     appointmentDateTime.setHours(hour24, minutes || 0, 0, 0);
-    const activationTime = appointmentDateTime.toISOString();
+    
+    // Create a proper EST date by formatting the date/time in EST and then parsing it
+    const estDateString = appointmentDateTime.toLocaleDateString('en-CA', {timeZone: 'America/New_York'});
+    const estTimeString = appointmentDateTime.toLocaleTimeString('en-GB', {timeZone: 'America/New_York', hour12: false});
+    const estISOString = `${estDateString}T${estTimeString}`;
+    
+    // Create the final EST datetime
+    const estDateTime = new Date(estISOString);
+    const activationTime = estDateTime.toISOString();
     
     // Set expiration to 2 hours after appointment time
-    const expirationDateTime = new Date(appointmentDateTime.getTime() + (2 * 60 * 60 * 1000));
+    const expirationDateTime = new Date(estDateTime.getTime() + (2 * 60 * 60 * 1000));
     const expirationTime = expirationDateTime.toISOString();
 
     // Create signers for each email address

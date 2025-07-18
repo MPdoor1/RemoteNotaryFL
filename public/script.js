@@ -29,26 +29,72 @@ const getUserTimezoneDisplay = () => {
 
 // Convert time from user timezone to EST
 const convertToEST = (dateString, timeString) => {
-    const userDateTime = new Date(`${dateString}T${timeString}`);
-    const estDateTime = new Date(userDateTime.toLocaleString("en-US", {timeZone: jacksonvilleTZ}));
-    return {
-        date: estDateTime.toISOString().split('T')[0],
-        time: estDateTime.toTimeString().substr(0, 5)
-    };
+    try {
+        // Create a date in the user's local timezone
+        const userDateTime = new Date(`${dateString}T${timeString}`);
+        
+        // Format the date in EST timezone
+        const estString = userDateTime.toLocaleString("en-CA", {
+            timeZone: jacksonvilleTZ,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        
+        const [datePart, timePart] = estString.split(', ');
+        
+        return {
+            date: datePart,
+            time: timePart
+        };
+    } catch (error) {
+        console.error('Error converting to EST:', error);
+        return { date: dateString, time: timeString };
+    }
 };
 
-// Convert time from EST to user timezone
+// Convert time from EST to user timezone  
 const convertFromEST = (dateString, timeString) => {
-    // Create a date object assuming the input is in EST
-    const estDateTime = new Date(`${dateString}T${timeString}`);
-    
-    // Convert to user's timezone
-    const userDateTime = new Date(estDateTime.toLocaleString("en-US", {timeZone: userTimezone}));
-    
-    return {
-        date: userDateTime.toISOString().split('T')[0],
-        time: userDateTime.toTimeString().substr(0, 5)
-    };
+    try {
+        // Create a date string in EST timezone format
+        const estDateTimeString = `${dateString}T${timeString}`;
+        
+        // Parse as if it's in EST timezone by creating date and adjusting
+        const tempDate = new Date(estDateTimeString);
+        
+        // Get current EST offset to calculate the adjustment needed
+        const now = new Date();
+        const estNow = new Date(now.toLocaleString("en-US", {timeZone: jacksonvilleTZ}));
+        const localNow = new Date(now.toLocaleString("en-US", {timeZone: userTimezone}));
+        const offsetDiff = localNow.getTime() - estNow.getTime();
+        
+        // Apply the offset difference
+        const adjustedDate = new Date(tempDate.getTime() + offsetDiff);
+        
+        // Format in user's timezone
+        const userString = adjustedDate.toLocaleString("en-CA", {
+            timeZone: userTimezone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        
+        const [datePart, timePart] = userString.split(', ');
+        
+        return {
+            date: datePart,
+            time: timePart
+        };
+    } catch (error) {
+        console.error('Error converting from EST:', error);
+        return { date: dateString, time: timeString };
+    }
 };
 
 // Format time for display with timezone indicator
