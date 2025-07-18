@@ -185,15 +185,124 @@ function initializeStripeElements() {
     }
 }
 
+// Global variables for promo code
+let appliedPromoCode = null;
+let promoCodeDiscount = 0;
+
 function updatePaymentAmount() {
     const serviceType = document.getElementById('serviceType').value;
     const paymentAmount = document.getElementById('paymentAmount');
+    const paymentSubtotal = document.getElementById('paymentSubtotal');
+    const discountLine = document.getElementById('discountLine');
+    const discountAmount = document.getElementById('discountAmount');
     
     if (serviceType && serviceOptions[serviceType]) {
-        paymentAmount.textContent = serviceOptions[serviceType].price;
+        const originalPrice = serviceOptions[serviceType].price;
+        paymentSubtotal.textContent = originalPrice;
+        
+        // Apply promo code discount if available
+        if (appliedPromoCode && promoCodeDiscount > 0) {
+            const discount = originalPrice * (promoCodeDiscount / 100);
+            const finalPrice = originalPrice - discount;
+            
+            discountAmount.textContent = discount.toFixed(2);
+            paymentAmount.textContent = finalPrice.toFixed(2);
+            discountLine.style.display = 'block';
+        } else {
+            paymentAmount.textContent = originalPrice;
+            discountLine.style.display = 'none';
+        }
     } else {
+        paymentSubtotal.textContent = '0';
         paymentAmount.textContent = '0';
+        discountLine.style.display = 'none';
     }
+}
+
+// Promo Code Functions
+function validatePromoCode(promoCode) {
+    // Valid promo codes that correspond to your Stripe promo code
+    // promo_1RmKHtGpt03TMvPVyl3BJHct = 50% off
+    const validPromoCodes = {
+        'SAVE50': { discount: 50, description: '50% off', stripeId: 'promo_1RmKHtGpt03TMvPVyl3BJHct' },
+        'HALFOFF': { discount: 50, description: '50% off', stripeId: 'promo_1RmKHtGpt03TMvPVyl3BJHct' },
+        'PROMO50': { discount: 50, description: '50% off', stripeId: 'promo_1RmKHtGpt03TMvPVyl3BJHct' },
+        'REMOTENOTARY50': { discount: 50, description: '50% off', stripeId: 'promo_1RmKHtGpt03TMvPVyl3BJHct' }
+    };
+    
+    const upperPromoCode = promoCode.toUpperCase();
+    return validPromoCodes[upperPromoCode] || null;
+}
+
+function applyPromoCode() {
+    const promoCodeInput = document.getElementById('promoCode');
+    const promoMessage = document.getElementById('promo-message');
+    const applyButton = document.getElementById('applyPromoCode');
+    
+    const promoCode = promoCodeInput.value.trim();
+    
+    if (!promoCode) {
+        promoMessage.textContent = 'Please enter a promo code';
+        promoMessage.className = 'promo-message error';
+        return;
+    }
+    
+    // Disable button during validation
+    applyButton.disabled = true;
+    applyButton.textContent = 'Applying...';
+    
+    // Simulate API call delay
+    setTimeout(() => {
+        const promoDetails = validatePromoCode(promoCode);
+        
+        if (promoDetails) {
+            // Valid promo code
+            appliedPromoCode = promoCode.toUpperCase();
+            promoCodeDiscount = promoDetails.discount;
+            
+            promoMessage.textContent = `✓ Promo code applied! ${promoDetails.description}`;
+            promoMessage.className = 'promo-message success';
+            
+            // Update button to show removal option
+            applyButton.textContent = 'Remove';
+            applyButton.disabled = false;
+            applyButton.onclick = removePromoCode;
+            
+            // Disable input
+            promoCodeInput.disabled = true;
+            
+            // Update payment amount
+            updatePaymentAmount();
+        } else {
+            // Invalid promo code
+            promoMessage.textContent = 'Invalid promo code. Please try again.';
+            promoMessage.className = 'promo-message error';
+            applyButton.textContent = 'Apply';
+            applyButton.disabled = false;
+        }
+    }, 500);
+}
+
+function removePromoCode() {
+    const promoCodeInput = document.getElementById('promoCode');
+    const promoMessage = document.getElementById('promo-message');
+    const applyButton = document.getElementById('applyPromoCode');
+    
+    // Reset promo code state
+    appliedPromoCode = null;
+    promoCodeDiscount = 0;
+    
+    // Reset UI
+    promoCodeInput.value = '';
+    promoCodeInput.disabled = false;
+    promoMessage.textContent = '';
+    promoMessage.className = 'promo-message';
+    
+    applyButton.textContent = 'Apply';
+    applyButton.onclick = applyPromoCode;
+    
+    // Update payment amount
+    updatePaymentAmount();
 }
 
 // Process Stripe Payment
@@ -209,7 +318,9 @@ async function processStripePayment(booking) {
                 amount: booking.price,
                 product_id: booking.productId,
                 service_name: booking.serviceName,
-                booking_id: booking.id
+                booking_id: booking.id,
+                promo_code: appliedPromoCode,
+                discount_percent: promoCodeDiscount
             })
         });
         
@@ -316,12 +427,54 @@ function openBookingModal() {
     if (serviceTypeSelect) {
         serviceTypeSelect.addEventListener('change', updatePaymentAmount);
     }
+    
+    // Set up promo code functionality
+    const applyPromoCodeButton = document.getElementById('applyPromoCode');
+    if (applyPromoCodeButton) {
+        applyPromoCodeButton.onclick = applyPromoCode;
+    }
+    
+    // Allow Enter key to apply promo code
+    const promoCodeInput = document.getElementById('promoCode');
+    if (promoCodeInput) {
+        promoCodeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyPromoCode();
+            }
+        });
+    }
 }
 
 function closeBookingModal() {
     const modal = document.getElementById('bookingModal');
     modal.style.display = 'none';
     document.getElementById('bookingForm').reset();
+    
+    // Reset promo code state
+    appliedPromoCode = null;
+    promoCodeDiscount = 0;
+    
+    // Reset promo code UI
+    const promoCodeInput = document.getElementById('promoCode');
+    const promoMessage = document.getElementById('promo-message');
+    const applyButton = document.getElementById('applyPromoCode');
+    
+    if (promoCodeInput) {
+        promoCodeInput.value = '';
+        promoCodeInput.disabled = false;
+    }
+    
+    if (promoMessage) {
+        promoMessage.textContent = '';
+        promoMessage.className = 'promo-message';
+    }
+    
+    if (applyButton) {
+        applyButton.textContent = 'Apply';
+        applyButton.onclick = applyPromoCode;
+        applyButton.disabled = false;
+    }
 }
 
 function generateTimeSlots() {

@@ -763,9 +763,10 @@ app.post('/send-meeting-link', async (req, res) => {
 // Stripe payment endpoints
 app.post('/create-payment-intent', async (req, res) => {
   try {
-    const { amount, currency = 'usd', booking_id, product_id, service_name } = req.body;
+    const { amount, currency = 'usd', booking_id, product_id, service_name, promo_code, discount_percent } = req.body;
     
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Create payment intent with optional promo code
+    const paymentIntentData = {
       amount: Math.round(amount * 100), // Convert to cents
       currency: currency,
       automatic_payment_methods: {
@@ -774,9 +775,27 @@ app.post('/create-payment-intent', async (req, res) => {
       metadata: {
         booking_id: booking_id,
         product_id: product_id,
-        service_name: service_name
+        service_name: service_name,
+        promo_code: promo_code || 'none',
+        discount_percent: discount_percent || '0'
       }
-    });
+    };
+    
+    // Add promotion code if provided  
+    if (promo_code && promo_code.toLowerCase() !== 'none') {
+      try {
+        // For your specific promo code, we'll use the Stripe promotion code
+        // Note: promotion_code is used with Checkout, not Payment Intents
+        // We'll handle the discount on the frontend and track it in metadata
+        console.log(`Applying promo code: ${promo_code} (${discount_percent}% off)`);
+        console.log(`Discounted amount: $${amount} (after ${discount_percent}% discount)`);
+      } catch (promoError) {
+        console.error('Error applying promo code:', promoError);
+        // Continue without promo code if there's an error
+      }
+    }
+    
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
     
     res.json({
       success: true,

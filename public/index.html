@@ -453,9 +453,20 @@
                         </div>
                         <div id="card-errors" role="alert" class="card-errors"></div>
                         <div class="payment-summary">
-                            <p>Total: $<span id="paymentAmount">0</span></p>
+                            <p>Subtotal: $<span id="paymentSubtotal">0</span></p>
+                            <p id="discountLine" style="display: none; color: #28a745;">Discount (50% off): -$<span id="discountAmount">0</span></p>
+                            <p><strong>Total: $<span id="paymentAmount">0</span></strong></p>
                             <small>Payment will be processed securely through Stripe</small>
                         </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="promoCode">Promo Code (Optional)</label>
+                        <div class="promo-code-input-group">
+                            <input type="text" id="promoCode" name="promoCode" placeholder="Enter promo code">
+                            <button type="button" id="applyPromoCode" class="btn-promo">Apply</button>
+                        </div>
+                        <div id="promo-message" class="promo-message"></div>
                     </div>
                     
                     <div class="form-actions">
