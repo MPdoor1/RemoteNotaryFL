@@ -50,11 +50,24 @@ header.scrolled {
     color: #B8860B;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    transition: all 0.3s ease;
 }
 
 .logo:hover {
     color: #DAA520;
     transform: scale(1.05);
+}
+
+.logo:hover .logo-icon {
+    transform: scale(1.1);
 }
 
 .nav-menu {
