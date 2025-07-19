@@ -224,6 +224,7 @@ function validatePromoCode(promoCode) {
     // Valid promo codes that correspond to your Stripe promo code
     // promo_1RmKHtGpt03TMvPVyl3BJHct = 50% off
     const validPromoCodes = {
+        '50PARTNER': { discount: 50, description: '50% off', stripeId: 'promo_1RmKHtGpt03TMvPVyl3BJHct' },
         'SAVE50': { discount: 50, description: '50% off', stripeId: 'promo_1RmKHtGpt03TMvPVyl3BJHct' },
         'HALFOFF': { discount: 50, description: '50% off', stripeId: 'promo_1RmKHtGpt03TMvPVyl3BJHct' },
         'PROMO50': { discount: 50, description: '50% off', stripeId: 'promo_1RmKHtGpt03TMvPVyl3BJHct' },
@@ -434,6 +435,17 @@ function openBookingModal() {
         applyPromoCodeButton.onclick = applyPromoCode;
     }
     
+    // Prevent promo code input group from interfering with text selection
+    const promoCodeGroup = document.querySelector('.promo-code-input-group');
+    if (promoCodeGroup) {
+        promoCodeGroup.addEventListener('mousedown', function(e) {
+            e.stopPropagation();
+        });
+        promoCodeGroup.addEventListener('mouseup', function(e) {
+            e.stopPropagation();
+        });
+    }
+    
     // Allow Enter key to apply promo code
     const promoCodeInput = document.getElementById('promoCode');
     if (promoCodeInput) {
@@ -442,6 +454,19 @@ function openBookingModal() {
                 e.preventDefault();
                 applyPromoCode();
             }
+        });
+        
+        // Prevent any unwanted navigation on text selection
+        promoCodeInput.addEventListener('mousedown', function(e) {
+            e.stopPropagation();
+        });
+        
+        promoCodeInput.addEventListener('mouseup', function(e) {
+            e.stopPropagation();
+        });
+        
+        promoCodeInput.addEventListener('click', function(e) {
+            e.stopPropagation();
         });
     }
 }

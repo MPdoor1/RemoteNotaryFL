@@ -1730,6 +1730,10 @@ footer::before {
     font-size: 16px;
     transition: border-color 0.3s ease;
     text-transform: uppercase;
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
 }
 
 .promo-code-input-group input[type="text"]:focus {
@@ -1772,6 +1776,22 @@ footer::before {
 .promo-message.error {
     color: #dc3545;
     font-weight: bold;
+}
+
+/* Prevent text selection issues in modal */
+.booking-modal .modal-content {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* Ensure promo code field allows proper text selection */
+.promo-code-input-group {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
 }
 
 .add-email-btn {
