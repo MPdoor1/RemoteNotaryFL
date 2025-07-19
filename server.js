@@ -22,51 +22,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Jacksonville, FL timezone handling - Fixed timezone conversion
+// Simple, reliable timezone formatting functions for Jacksonville, FL (Eastern Time)
 const formatDateTimeForJacksonville = (dateString, timeString) => {
   try {
-    // Handle both "YYYY-MM-DD" and "Day, Month DD, YYYY" formats
-    let appointmentDate;
-    
-    if (dateString.includes(',')) {
-      // Handle "Thursday, July 17, 2025" format
-      appointmentDate = new Date(dateString);
-    } else {
-      // Handle "YYYY-MM-DD" format
-      const [year, month, day] = dateString.split('-').map(Number);
-      appointmentDate = new Date(year, month - 1, day);
-    }
-    
-    // Parse time (assume EST input)
-    const [time, period] = timeString.includes('M') ? timeString.split(' ') : [timeString, null];
-    const [hours, minutes] = time.split(':').map(Number);
-    
-    let hour24 = hours;
-    if (period === 'PM' && hours !== 12) hour24 += 12;
-    if (period === 'AM' && hours === 12) hour24 = 0;
-    
-    // Set time on the date
-    appointmentDate.setHours(hour24, minutes || 0, 0, 0);
-    
-    // Format for Jacksonville, FL (Eastern Time) with proper timezone handling
-    const options = {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZone: 'America/New_York'
-    };
-    
-    const formatted = appointmentDate.toLocaleString('en-US', options);
-    
-    // Determine if we're in EST or EDT
-    const estOffset = appointmentDate.getTimezoneOffset();
-    const isEDT = estOffset === 240; // EDT is UTC-4 (240 minutes)
-    const timeZoneAbbr = isEDT ? 'EDT' : 'EST';
-    
-    return formatted + ` ${timeZoneAbbr}`;
+    const formattedDate = formatDateForJacksonville(dateString);
+    const formattedTime = formatTimeForJacksonville(timeString);
+    return `${formattedDate} at ${formattedTime}`;
   } catch (error) {
     console.error('Error formatting date/time:', error);
     return `${dateString} at ${timeString} ET`;
@@ -75,26 +36,27 @@ const formatDateTimeForJacksonville = (dateString, timeString) => {
 
 const formatDateForJacksonville = (dateString) => {
   try {
-    // Handle both "YYYY-MM-DD" and "Day, Month DD, YYYY" formats
-    let date;
+    let year, month, day;
     
     if (dateString.includes(',')) {
       // Handle "Thursday, July 17, 2025" format
-      date = new Date(dateString);
+      const tempDate = new Date(dateString + ' 12:00:00 GMT-0500'); // Force EST interpretation
+      year = tempDate.getUTCFullYear();
+      month = tempDate.getUTCMonth() + 1;
+      day = tempDate.getUTCDate();
     } else {
       // Handle "YYYY-MM-DD" format
-      const [year, month, day] = dateString.split('-').map(Number);
-      date = new Date(year, month - 1, day);
+      [year, month, day] = dateString.split('-').map(Number);
     }
     
-    const options = {
+    // Create a date and format it
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      timeZone: 'America/New_York'
-    };
-    return date.toLocaleDateString('en-US', options);
+      day: 'numeric'
+    });
   } catch (error) {
     console.error('Error formatting date:', error);
     return dateString;
@@ -103,7 +65,7 @@ const formatDateForJacksonville = (dateString) => {
 
 const formatTimeForJacksonville = (timeString) => {
   try {
-    // Parse time string (assumes format like "14:30" or "2:30 PM")
+    // Parse time (input should already be in Eastern Time)
     const [time, period] = timeString.includes('M') ? timeString.split(' ') : [timeString, null];
     const [hours, minutes] = time.split(':').map(Number);
     
@@ -111,25 +73,34 @@ const formatTimeForJacksonville = (timeString) => {
     if (period === 'PM' && hours !== 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    // Create time with proper timezone handling
-    const today = new Date();
-    const dateTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour24, minutes || 0);
+    // Convert to 12-hour format
+    let displayHour = hour24;
+    let displayPeriod = 'AM';
     
-    const options = {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZone: 'America/New_York'
-    };
+    if (hour24 === 0) {
+      displayHour = 12;
+      displayPeriod = 'AM';
+    } else if (hour24 === 12) {
+      displayHour = 12;
+      displayPeriod = 'PM';
+    } else if (hour24 > 12) {
+      displayHour = hour24 - 12;
+      displayPeriod = 'PM';
+    } else {
+      displayHour = hour24;
+      displayPeriod = 'AM';
+    }
     
-    const formattedTime = dateTime.toLocaleTimeString('en-US', options);
+    const formattedMinutes = (minutes || 0).toString().padStart(2, '0');
     
-    // Determine if we're in EST or EDT
-    const estOffset = dateTime.getTimezoneOffset();
-    const isEDT = estOffset === 240; // EDT is UTC-4 (240 minutes)
-    const timeZoneAbbr = isEDT ? 'EDT' : 'EST';
+    // Determine EST vs EDT based on current date
+    // This is a simple approximation - DST typically runs March-November
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // 1-12
+    const isLikelyDST = (currentMonth >= 3 && currentMonth <= 11);
+    const timeZoneAbbr = isLikelyDST ? 'EDT' : 'EST';
     
-    return formattedTime + ` ${timeZoneAbbr}`;
+    return `${displayHour}:${formattedMinutes} ${displayPeriod} ${timeZoneAbbr}`;
   } catch (error) {
     console.error('Error formatting time:', error);
     return timeString + ' ET';
