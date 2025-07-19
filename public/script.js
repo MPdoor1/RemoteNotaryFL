@@ -711,13 +711,21 @@ async function showBookingConfirmation(booking) {
     // Emails are already sent by the server during payment confirmation
     // No need to send duplicate emails here
     
+    // Format price information with discount details if applicable
+    let priceInfo = `💰 Price: $${booking.price} (PAID)`;
+    if (booking.promoCode && booking.discountPercent > 0) {
+        priceInfo = `💰 Original Price: $${booking.originalPrice}
+        🎟️ Promo Code: ${booking.promoCode} (${booking.discountPercent}% off)
+        💰 Final Price: $${booking.price} (PAID)`;
+    }
+    
     const confirmationMessage = `
         🎉 Appointment Scheduled Successfully!
         
         📅 Date: ${formatBookingDate(booking.date)}
         ⏰ Time: ${booking.timeDisplay}
         📋 Service: ${booking.serviceName}
-        💰 Price: $${booking.price} (PAID)
+        ${priceInfo}
         
         📧 Confirmation email sent to: ${booking.email}
         📱 Meeting link included in confirmation email
@@ -866,6 +874,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     displayText: selectedTimeSlot.textContent.trim()
                 };
                 
+                // Calculate final price with discount if applicable
+                const originalPrice = selectedService.price;
+                let finalPrice = originalPrice;
+                if (appliedPromoCode && promoCodeDiscount > 0) {
+                    finalPrice = originalPrice * (1 - promoCodeDiscount / 100);
+                    console.log(`✅ Promo code ${appliedPromoCode} applied: ${promoCodeDiscount}% off`);
+                    console.log(`💰 Original price: $${originalPrice}, Final price: $${finalPrice}`);
+                } else {
+                    console.log(`💰 No promo code applied. Price: $${finalPrice}`);
+                }
+                
                 const booking = {
                     id: Date.now().toString(),
                     name: formData.get('clientName'),
@@ -879,7 +898,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     time: selectedTime.estTime, // Always use EST time for server
                     timeDisplay: selectedTime.displayText, // User-friendly display with timezone
                     specialRequests: formData.get('specialRequests'),
-                    price: selectedService.price,
+                    price: finalPrice, // Use discounted price
+                    originalPrice: originalPrice, // Store original price for reference
+                    promoCode: appliedPromoCode, // Store applied promo code
+                    discountPercent: promoCodeDiscount, // Store discount percentage
                     status: 'scheduled',
                     createdAt: new Date().toISOString()
                 };

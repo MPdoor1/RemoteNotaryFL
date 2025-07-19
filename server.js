@@ -787,12 +787,16 @@ app.post('/create-payment-intent', async (req, res) => {
         // For your specific promo code, we'll use the Stripe promotion code
         // Note: promotion_code is used with Checkout, not Payment Intents
         // We'll handle the discount on the frontend and track it in metadata
-        console.log(`Applying promo code: ${promo_code} (${discount_percent}% off)`);
-        console.log(`Discounted amount: $${amount} (after ${discount_percent}% discount)`);
+        console.log(`✅ Processing payment with promo code: ${promo_code} (${discount_percent}% off)`);
+        console.log(`💳 Charging discounted amount: $${amount} (${discount_percent}% discount already applied)`);
+        console.log(`📊 Stripe will charge: $${Math.round(amount * 100)} cents`);
       } catch (promoError) {
         console.error('Error applying promo code:', promoError);
         // Continue without promo code if there's an error
       }
+    } else {
+      console.log(`💳 Processing payment without promo code: $${amount}`);
+      console.log(`📊 Stripe will charge: $${Math.round(amount * 100)} cents`);
     }
     
     const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
