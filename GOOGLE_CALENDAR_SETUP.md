@@ -21,9 +21,9 @@ This guide will help you set up Google Calendar integration for your Remote Nota
 3. If prompted, configure the OAuth consent screen:
    - **Application type**: External
    - **Application name**: Remote Notary FL
-   - **User support email**: remotenotaryfl@gmail.com
+   - **User support email**: info@remotenotaryfl.com
    - **Authorized domains**: remotenotaryfl.com
-   - **Developer contact**: remotenotaryfl@gmail.com
+   - **Developer contact**: info@remotenotaryfl.com
 4. For OAuth 2.0 Client ID:
    - **Application type**: Web application
    - **Name**: Remote Notary FL Server
@@ -40,7 +40,7 @@ This guide will help you set up Google Calendar integration for your Remote Nota
 5. In the left panel, find **"Calendar API v3"**
 6. Select **"https://www.googleapis.com/auth/calendar"**
 7. Click **"Authorize APIs"**
-8. Sign in with your **remotenotaryfl@gmail.com** account
+8. Sign in with your **info@remotenotaryfl.com** account
 9. Click **"Allow"** to grant permissions
 10. Click **"Exchange authorization code for tokens"**
 11. **Save the Refresh Token** - you'll need this!

@@ -142,7 +142,7 @@ const PROOF_API_HEADERS = {
 const googleCalendarClientId = process.env.GOOGLE_CLIENT_ID;
 const googleCalendarClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const googleCalendarRefreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-const googleCalendarEmail = 'remotenotaryfl@gmail.com';
+const googleCalendarEmail = 'info@remotenotaryfl.com';
 
 if (!googleCalendarClientId || !googleCalendarClientSecret || !googleCalendarRefreshToken) {
   console.warn('⚠️  Google Calendar credentials not found. Calendar integration will be disabled.');
@@ -345,7 +345,7 @@ IMPORTANT: You must upload your documents before the meeting. Use the link provi
 
 You will meet with a licensed notary via video call. Please have your valid government-issued photo ID ready. The meeting link will become active 15 minutes before your scheduled time.
 
-For technical support, contact remotenotaryfl@gmail.com`,
+For technical support, contact info@remotenotaryfl.com`,
       message_signature: "Remote Notary FL - Licensed Notary Services"
     };
 
@@ -402,8 +402,8 @@ const createBusinessNotificationEmail = (bookingData, meetingLink = null) => {
   const cleanDateTime = `${formattedDate} at ${formattedTime}`;
   
   return {
-    to: 'remotenotaryfl@gmail.com', // Send to Gmail only (single email)
-    from: 'remotenotaryfl@remotenotaryfl.com',
+    to: 'info@remotenotaryfl.com', // Send to business email (single email)
+    from: 'info@remotenotaryfl.com',
     subject: `🔔 NEW BOOKING ALERT - ${bookingData.client_name} - ${bookingData.booking_id}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -494,13 +494,13 @@ const createBookingConfirmationEmail = (bookingData, meetingLink = null, isBusin
         </div>
   ` : '';
 
-  const recipient = isBusinessCopy ? 'remotenotaryfl@remotenotaryfl.com' : bookingData.email;
+  const recipient = isBusinessCopy ? 'info@remotenotaryfl.com' : bookingData.email;
   const subjectPrefix = isBusinessCopy ? '[BUSINESS COPY] ' : '';
 
   return {
     to: recipient,
-    from: 'remotenotaryfl@remotenotaryfl.com',
-    replyTo: 'remotenotaryfl@remotenotaryfl.com',
+    from: 'info@remotenotaryfl.com',
+    replyTo: 'info@remotenotaryfl.com',
     subject: `${subjectPrefix}✅ ${bookingData.service_name} Appointment Confirmed - ${bookingData.booking_id}`,
     headers: {
       'X-Priority': '1',
@@ -583,8 +583,8 @@ const createMeetingLinkEmail = (bookingData, meetingLink) => {
   const cleanDateTime = `${formattedDate} at ${formattedTime}`;
   
   return {
-    to: [bookingData.email, 'remotenotaryfl@gmail.com'], // Send to client and Gmail only
-    from: 'remotenotaryfl@remotenotaryfl.com',
+    to: [bookingData.email, 'info@remotenotaryfl.com'], // Send to client and business email
+    from: 'info@remotenotaryfl.com',
     subject: `🔗 Your Notarization Meeting Link - ${bookingData.booking_id}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -655,7 +655,7 @@ app.post('/send-booking-confirmation', async (req, res) => {
     try {
       const businessNotificationData = createBusinessNotificationEmail(bookingData);
       await sgMail.send(businessNotificationData);
-      console.log('Business notification email sent to remotenotaryfl@gmail.com');
+              console.log('Business notification email sent to info@remotenotaryfl.com');
       emailSuccessCount++;
     } catch (businessEmailError) {
       console.error('Failed to send business notification email:', businessEmailError.message);
@@ -860,7 +860,7 @@ app.post('/confirm-payment', async (req, res) => {
       try {
         const businessNotificationData = createBusinessNotificationEmail(booking_data, meetingLink);
         await sgMail.send(businessNotificationData);
-        console.log('Business notification email sent to remotenotaryfl@gmail.com');
+        console.log('Business notification email sent to info@remotenotaryfl.com');
       } catch (businessEmailError) {
         console.error('Failed to send business notification email:', businessEmailError.message);
         emailErrors.push(`Failed to send business notification: ${businessEmailError.message}`);

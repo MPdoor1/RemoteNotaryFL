@@ -16,6 +16,89 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
+// Number Animation for Statistics
+const animateNumbers = () => {
+    const numbers = document.querySelectorAll('.stat-number');
+    
+    const observerOptions = {
+        threshold: 0.7,
+        rootMargin: '0px 0px -100px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const target = parseInt(entry.target.dataset.target);
+                const duration = 2000; // 2 seconds
+                const steps = 60; // 60 steps for smooth animation
+                const increment = target / steps;
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    entry.target.textContent = Math.floor(current);
+                }, duration / steps);
+                
+                // Add pulse effect
+                entry.target.style.animation = 'pulse 0.5s ease-in-out';
+                
+                // Disconnect observer for this element
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    numbers.forEach(number => {
+        observer.observe(number);
+    });
+};
+
+// Enhanced page interactions
+const enhancePageInteractions = () => {
+    // Add parallax effect to hero section
+    const hero = document.querySelector('.hero');
+    const heroContent = document.querySelector('.hero-content');
+    
+    if (hero && heroContent) {
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const parallax = scrolled * 0.5;
+            
+            heroContent.style.transform = `translateY(${parallax}px)`;
+        });
+    }
+    
+    // Add smooth entrance animations
+    const fadeElements = document.querySelectorAll('.selling-point, .service-card, .testimonial-card');
+    
+    const fadeObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+                fadeObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    fadeElements.forEach(element => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(50px)';
+        element.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+        fadeObserver.observe(element);
+    });
+};
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    animateNumbers();
+    enhancePageInteractions();
+});
+
 // Timezone Detection and Conversion
 const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const jacksonvilleTZ = 'America/New_York'; // Jacksonville, FL timezone
