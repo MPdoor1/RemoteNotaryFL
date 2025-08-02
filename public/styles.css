@@ -166,19 +166,9 @@ header.scrolled {
     font-size: 3.5rem;
     margin-bottom: 1.5rem;
     font-weight: bold;
+    color: #ffffff;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
     animation: slideInUp 1s ease-out;
-    background: linear-gradient(135deg, #ffffff 0%, #DAA520 50%, #ffffff 100%);
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: slideInUp 1s ease-out, shimmer 3s ease-in-out infinite alternate;
-}
-
-@keyframes shimmer {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 100% 50%; }
 }
 
 .hero-content p {
@@ -242,167 +232,18 @@ header.scrolled {
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* Professional Icon Styles */
-.icon-professional {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 1.5rem auto;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    box-shadow: 0 8px 25px rgba(184, 134, 11, 0.3);
-    transition: all 0.3s ease;
+.selling-point .icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease;
 }
 
-.icon-professional::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: conic-gradient(from 0deg, #B8860B, #DAA520, #B8860B);
-    animation: rotate 3s linear infinite;
-    z-index: -1;
+.selling-point:hover .icon {
+    transform: scale(1.1);
 }
 
-.icon-professional::after {
-    content: '';
-    position: absolute;
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: #1a1a1a;
-    z-index: 0;
-}
-
-.security-icon {
-    background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
-}
-
-.security-icon::after {
-    content: '';
-    position: absolute;
-    width: 30px;
-    height: 35px;
-    background: #ffffff;
-    border-radius: 4px 4px 0 0;
-    z-index: 1;
-    box-shadow: 0 0 0 3px #ffffff;
-}
-
-.security-icon::before {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border: 4px solid #ffffff;
-    border-radius: 50%;
-    top: 15px;
-    z-index: 2;
-}
-
-.convenience-icon {
-    background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
-}
-
-.convenience-icon::after {
-    content: '';
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    background: #ffffff;
-    border-radius: 50%;
-    z-index: 1;
-}
-
-.convenience-icon::before {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background: #B8860B;
-    border-radius: 50%;
-    z-index: 2;
-    box-shadow: -8px -8px 0 #B8860B, 8px -8px 0 #B8860B, -8px 8px 0 #B8860B, 8px 8px 0 #B8860B;
-}
-
-.speed-icon {
-    background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
-}
-
-.speed-icon::after {
-    content: '';
-    position: absolute;
-    width: 0;
-    height: 0;
-    border-left: 20px solid #ffffff;
-    border-top: 15px solid transparent;
-    border-bottom: 15px solid transparent;
-    z-index: 1;
-    left: 35px;
-}
-
-.speed-icon::before {
-    content: '';
-    position: absolute;
-    width: 25px;
-    height: 4px;
-    background: #ffffff;
-    z-index: 2;
-    left: 20px;
-    box-shadow: 0 -8px 0 #ffffff, 0 8px 0 #ffffff;
-}
-
-.icon-professional:hover {
-    transform: scale(1.1) rotate(5deg);
-    box-shadow: 0 12px 35px rgba(184, 134, 11, 0.5);
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-@keyframes iconGlow {
-    0%, 100% { 
-        box-shadow: 0 8px 25px rgba(184, 134, 11, 0.3);
-    }
-    50% { 
-        box-shadow: 0 8px 25px rgba(184, 134, 11, 0.6), 0 0 20px rgba(218, 165, 32, 0.4);
-    }
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-}
-
-.icon-professional {
-    animation: iconGlow 3s ease-in-out infinite, float 4s ease-in-out infinite;
-}
-
-.step-icon-professional {
-    animation: float 5s ease-in-out infinite;
-}
-
-/* Add sophisticated gradient overlays */
-.hero::before {
-    animation: pulse 4s ease-in-out infinite, rotate 20s linear infinite;
-}
-
-/* Enhanced text shadows for better readability */
-.hero-content h2 {
-    text-shadow: 
-        2px 2px 4px rgba(0,0,0,0.8),
-        0 0 20px rgba(184, 134, 11, 0.3);
-}
-
-.selling-point h3,
-.step-content h3 {
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-}
+/* Remove broken animation references */
 
 .selling-point h3 {
     color: #DAA520;
@@ -432,45 +273,23 @@ header.scrolled {
 .cta-button {
     background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
     color: #ffffff;
-    padding: 20px 50px;
+    padding: 18px 40px;
     border: none;
-    border-radius: 50px;
+    border-radius: 8px;
     font-size: 1.2rem;
     font-weight: bold;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    box-shadow: 
-        0 8px 25px rgba(184, 134, 11, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.3);
     animation: slideInUp 1s ease-out 0.4s both;
-    position: relative;
-    overflow: hidden;
-}
-
-.cta-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.6s ease;
-}
-
-.cta-button:hover::before {
-    left: 100%;
 }
 
 .cta-button:hover {
     background: linear-gradient(135deg, #DAA520 0%, #B8860B 100%);
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 
-        0 15px 35px rgba(184, 134, 11, 0.6),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    letter-spacing: 3px;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(184, 134, 11, 0.4);
 }
 
 /* How It Works Section */
@@ -620,104 +439,17 @@ header.scrolled {
     margin: 0;
 }
 
-/* Professional Step Icons */
-.step-icon-professional {
-    width: 120px;
-    height: 120px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%);
-    box-shadow: 0 10px 25px rgba(184, 134, 11, 0.3);
-    position: relative;
-    transition: all 0.4s ease;
+.step-icon {
+    font-size: 6rem;
+    text-align: center;
     flex-shrink: 0;
+    width: 150px;
+    opacity: 0.8;
+    transition: transform 0.3s ease;
 }
 
-.step-icon-professional::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 20px;
-    background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
-    top: 0;
-    left: 0;
-}
-
-.calendar-icon::after {
-    content: '';
-    position: absolute;
-    width: 50px;
-    height: 40px;
-    background: #ffffff;
-    border-radius: 6px;
-    z-index: 1;
-}
-
-.calendar-icon::before {
-    content: '';
-    position: absolute;
-    width: 40px;
-    height: 6px;
-    background: #B8860B;
-    border-radius: 3px;
-    top: 30px;
-    z-index: 2;
-    box-shadow: 0 8px 0 #B8860B, 0 16px 0 #B8860B, -8px -15px 0 2px #ffffff, 8px -15px 0 2px #ffffff;
-}
-
-.link-icon::after {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border: 6px solid #ffffff;
-    border-radius: 50%;
-    z-index: 1;
-    left: 35px;
-}
-
-.link-icon::before {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border: 6px solid #ffffff;
-    border-radius: 50%;
-    z-index: 2;
-    left: 45px;
-    top: 10px;
-    border-right-color: transparent;
-    border-bottom-color: transparent;
-}
-
-.document-icon::after {
-    content: '';
-    position: absolute;
-    width: 40px;
-    height: 50px;
-    background: #ffffff;
-    border-radius: 4px;
-    z-index: 1;
-}
-
-.document-icon::before {
-    content: '';
-    position: absolute;
-    width: 30px;
-    height: 4px;
-    background: #B8860B;
-    border-radius: 2px;
-    z-index: 2;
-    top: 45px;
-    box-shadow: 0 -8px 0 #B8860B, 0 -16px 0 #B8860B, 0 -24px 0 #B8860B;
-}
-
-.step-icon-professional:hover {
-    transform: scale(1.05) rotateY(10deg);
-    box-shadow: 0 15px 35px rgba(184, 134, 11, 0.4);
+.step-icon:hover {
+    transform: scale(1.1);
 }
 
 /* Animated Counter Styles */

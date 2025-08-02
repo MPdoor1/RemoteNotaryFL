@@ -223,6 +223,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Service options with Stripe product IDs and pricing
 const serviceOptions = {
+    'test': {
+        name: 'Test Service',
+        price: 1,
+        productId: 'prod_SnIaT5x0zvhb3d',
+        description: 'Test service for development and demonstration'
+    },
     'notarization': {
         name: 'Notarization Service',
         price: 50,
