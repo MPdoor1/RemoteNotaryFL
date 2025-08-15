@@ -122,41 +122,35 @@ function initializeMobileFeatures() {
         });
     });
 
-    // Show/hide floating book button on scroll (mobile only)
-    let lastScrollTop = 0;
+    // Show floating book button on mobile
     const floatingBtn = document.getElementById('floatingBookBtn');
     
     function updateFloatingButton() {
-        if (window.innerWidth <= 768 && floatingBtn) {
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const heroHeight = document.querySelector('.hero')?.offsetHeight || 600;
-            
-            // Show button after scrolling past 50% of hero section or 300px, whichever is smaller
-            const triggerPoint = Math.min(heroHeight * 0.5, 300);
-            
-            if (scrollTop > triggerPoint) {
+        if (!floatingBtn) return;
+        
+        const isMobile = window.innerWidth <= 768;
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        if (isMobile) {
+            // On mobile, show button after scrolling 100px
+            if (scrollTop > 100) {
                 floatingBtn.style.display = 'flex';
                 floatingBtn.style.opacity = '1';
-                floatingBtn.style.visibility = 'visible';
             } else {
-                floatingBtn.style.opacity = '0';
-                floatingBtn.style.visibility = 'hidden';
-                setTimeout(() => {
-                    if (scrollTop <= triggerPoint) {
-                        floatingBtn.style.display = 'none';
-                    }
-                }, 300);
+                floatingBtn.style.opacity = '0.7'; // Still visible but faded at top
+                floatingBtn.style.display = 'flex';
             }
-            
-            lastScrollTop = scrollTop;
-        } else if (floatingBtn) {
-            // Hide on desktop
+        } else {
+            // Hide completely on desktop
             floatingBtn.style.display = 'none';
         }
     }
     
-    // Initial check
-    updateFloatingButton();
+    // Check immediately when page loads
+    setTimeout(() => {
+        updateFloatingButton();
+        console.log('Floating button initialized, mobile:', window.innerWidth <= 768);
+    }, 100);
     
     // Add scroll listener
     window.addEventListener('scroll', updateFloatingButton);

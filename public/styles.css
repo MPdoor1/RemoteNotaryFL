@@ -1494,7 +1494,7 @@ footer::before {
     cursor: pointer;
     box-shadow: 0 4px 20px rgba(184, 134, 11, 0.4);
     z-index: 1001; /* Higher z-index to ensure it's above all content */
-    display: none;
+    display: none; /* Hidden by default, shown on mobile via media query */
     align-items: center;
     gap: 8px;
     transition: all 0.3s ease;
@@ -1502,6 +1502,14 @@ footer::before {
     letter-spacing: 1px;
     max-width: 120px; /* Prevent it from getting too wide */
     text-align: center;
+}
+
+/* Show on mobile screens by default */
+@media (max-width: 768px) {
+    .floating-book-btn {
+        display: flex !important; /* Always show on mobile */
+        opacity: 0.8; /* Start slightly faded */
+    }
 }
 
 .floating-book-btn:hover {
@@ -1554,7 +1562,6 @@ footer::before {
     }
     
     .floating-book-btn {
-        display: flex;
         animation: pulse-glow 2s infinite;
         bottom: 15px; /* Slightly higher on mobile for better visibility */
         right: 15px;
