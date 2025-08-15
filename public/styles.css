@@ -1493,13 +1493,15 @@ footer::before {
     font-weight: bold;
     cursor: pointer;
     box-shadow: 0 4px 20px rgba(184, 134, 11, 0.4);
-    z-index: 999;
+    z-index: 1001; /* Higher z-index to ensure it's above all content */
     display: none;
     align-items: center;
     gap: 8px;
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
+    max-width: 120px; /* Prevent it from getting too wide */
+    text-align: center;
 }
 
 .floating-book-btn:hover {
@@ -1554,6 +1556,10 @@ footer::before {
     .floating-book-btn {
         display: flex;
         animation: pulse-glow 2s infinite;
+        bottom: 15px; /* Slightly higher on mobile for better visibility */
+        right: 15px;
+        padding: 10px 16px; /* Slightly smaller on mobile */
+        font-size: 13px;
     }
     
     @keyframes pulse-glow {
@@ -1563,11 +1569,6 @@ footer::before {
         50% { 
             box-shadow: 0 4px 30px rgba(184, 134, 11, 0.6);
         }
-    }
-    
-    /* Ensure floating button doesn't interfere with other elements */
-    body {
-        padding-bottom: 80px;
     }
 
     .hero-content h2 {

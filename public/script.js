@@ -126,47 +126,54 @@ function initializeMobileFeatures() {
     let lastScrollTop = 0;
     const floatingBtn = document.getElementById('floatingBookBtn');
     
-    if (window.innerWidth <= 768 && floatingBtn) {
-        window.addEventListener('scroll', () => {
+    function updateFloatingButton() {
+        if (window.innerWidth <= 768 && floatingBtn) {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const heroHeight = document.querySelector('.hero')?.offsetHeight || 600;
             
-            // Show button after scrolling down 100px
-            if (scrollTop > 100) {
+            // Show button after scrolling past 50% of hero section or 300px, whichever is smaller
+            const triggerPoint = Math.min(heroHeight * 0.5, 300);
+            
+            if (scrollTop > triggerPoint) {
                 floatingBtn.style.display = 'flex';
                 floatingBtn.style.opacity = '1';
+                floatingBtn.style.visibility = 'visible';
             } else {
                 floatingBtn.style.opacity = '0';
+                floatingBtn.style.visibility = 'hidden';
                 setTimeout(() => {
-                    if (scrollTop <= 100) {
+                    if (scrollTop <= triggerPoint) {
                         floatingBtn.style.display = 'none';
                     }
                 }, 300);
             }
             
             lastScrollTop = scrollTop;
-        });
+        } else if (floatingBtn) {
+            // Hide on desktop
+            floatingBtn.style.display = 'none';
+        }
     }
+    
+    // Initial check
+    updateFloatingButton();
+    
+    // Add scroll listener
+    window.addEventListener('scroll', updateFloatingButton);
 
     // Handle window resize
     window.addEventListener('resize', () => {
         const navMenu = document.querySelector('.nav-menu');
         const hamburger = document.querySelector('.hamburger');
-        const floatingBtn = document.getElementById('floatingBookBtn');
         
         if (window.innerWidth > 768) {
-            // Desktop view - hide mobile menu and floating button
+            // Desktop view - hide mobile menu
             navMenu.classList.remove('active');
             hamburger.classList.remove('active');
-            if (floatingBtn) {
-                floatingBtn.style.display = 'none';
-            }
-        } else {
-            // Mobile view - show floating button if scrolled
-            if (floatingBtn && window.pageYOffset > 100) {
-                floatingBtn.style.display = 'flex';
-                floatingBtn.style.opacity = '1';
-            }
         }
+        
+        // Update floating button visibility based on new screen size
+        updateFloatingButton();
     });
 }
 
