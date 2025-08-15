@@ -97,7 +97,78 @@ const enhancePageInteractions = () => {
 document.addEventListener('DOMContentLoaded', () => {
     animateNumbers();
     enhancePageInteractions();
+    initializeMobileFeatures();
 });
+
+// Mobile Menu Toggle Function
+function toggleMobileMenu() {
+    const navMenu = document.querySelector('.nav-menu');
+    const hamburger = document.querySelector('.hamburger');
+    
+    navMenu.classList.toggle('active');
+    hamburger.classList.toggle('active');
+}
+
+// Initialize Mobile Features
+function initializeMobileFeatures() {
+    // Close mobile menu when clicking on nav links
+    const navLinks = document.querySelectorAll('.nav-menu a');
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            const navMenu = document.querySelector('.nav-menu');
+            const hamburger = document.querySelector('.hamburger');
+            navMenu.classList.remove('active');
+            hamburger.classList.remove('active');
+        });
+    });
+
+    // Show/hide floating book button on scroll (mobile only)
+    let lastScrollTop = 0;
+    const floatingBtn = document.getElementById('floatingBookBtn');
+    
+    if (window.innerWidth <= 768 && floatingBtn) {
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // Show button after scrolling down 100px
+            if (scrollTop > 100) {
+                floatingBtn.style.display = 'flex';
+                floatingBtn.style.opacity = '1';
+            } else {
+                floatingBtn.style.opacity = '0';
+                setTimeout(() => {
+                    if (scrollTop <= 100) {
+                        floatingBtn.style.display = 'none';
+                    }
+                }, 300);
+            }
+            
+            lastScrollTop = scrollTop;
+        });
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        const navMenu = document.querySelector('.nav-menu');
+        const hamburger = document.querySelector('.hamburger');
+        const floatingBtn = document.getElementById('floatingBookBtn');
+        
+        if (window.innerWidth > 768) {
+            // Desktop view - hide mobile menu and floating button
+            navMenu.classList.remove('active');
+            hamburger.classList.remove('active');
+            if (floatingBtn) {
+                floatingBtn.style.display = 'none';
+            }
+        } else {
+            // Mobile view - show floating button if scrolled
+            if (floatingBtn && window.pageYOffset > 100) {
+                floatingBtn.style.display = 'flex';
+                floatingBtn.style.opacity = '1';
+            }
+        }
+    });
+}
 
 // Timezone Detection and Conversion
 const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -1454,26 +1525,54 @@ document.addEventListener('DOMContentLoaded', function() {
         startAutoSlide();
     }
 
-    // Add touch/swipe support for mobile
+    // Enhanced touch/swipe support for mobile
     let startX = 0;
     let endX = 0;
+    let startY = 0;
+    let endY = 0;
+    let isScrolling = false;
 
     if (sliderContainer) {
         sliderContainer.addEventListener('touchstart', function(e) {
             startX = e.touches[0].clientX;
-        });
+            startY = e.touches[0].clientY;
+            isScrolling = false;
+        }, { passive: true });
+
+        sliderContainer.addEventListener('touchmove', function(e) {
+            if (!startX || !startY) return;
+            
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            
+            const diffX = Math.abs(startX - currentX);
+            const diffY = Math.abs(startY - currentY);
+            
+            // Determine if user is scrolling vertically or swiping horizontally
+            if (diffY > diffX) {
+                isScrolling = true;
+            } else if (diffX > diffY && diffX > 10) {
+                // Prevent vertical scroll when swiping horizontally
+                e.preventDefault();
+            }
+        }, { passive: false });
 
         sliderContainer.addEventListener('touchend', function(e) {
+            if (isScrolling) return; // Don't handle swipe if user was scrolling
+            
             endX = e.changedTouches[0].clientX;
+            endY = e.changedTouches[0].clientY;
             handleSwipe();
-        });
+        }, { passive: true });
     }
 
     function handleSwipe() {
-        const swipeThreshold = 50;
+        const swipeThreshold = 75; // Increased threshold for better UX
         const diff = startX - endX;
+        const verticalDiff = Math.abs(startY - endY);
 
-        if (Math.abs(diff) > swipeThreshold) {
+        // Only handle horizontal swipes (not vertical scrolls)
+        if (Math.abs(diff) > swipeThreshold && verticalDiff < 100) {
             stopAutoSlide();
             if (diff > 0) {
                 // Swipe left - next slide
@@ -1484,8 +1583,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 showSlide(prevIndex);
             }
             // Longer delay on mobile after swipe
-            const restartDelay = window.innerWidth <= 768 ? 4000 : 1500;
+            const restartDelay = window.innerWidth <= 768 ? 5000 : 1500;
             setTimeout(startAutoSlide, restartDelay);
         }
+        
+        // Reset values
+        startX = 0;
+        endX = 0;
+        startY = 0;
+        endY = 0;
+        isScrolling = false;
     }
 }); // Force redeploy

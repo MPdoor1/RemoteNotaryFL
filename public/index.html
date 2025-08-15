@@ -20,6 +20,11 @@
                     <img src="NotaryFavicon.jpg" alt="Remote Notary FL" width="32" height="32" class="logo-icon">
                     Remote Notary
                 </h1>
+                <div class="hamburger" onclick="toggleMobileMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
                 <ul class="nav-menu">
                     <li><a href="#home">Home</a></li>
                     <li><a href="#services">Services</a></li>
@@ -284,6 +289,12 @@
             </div>
         </section>
     </main>
+
+    <!-- Floating Book Now Button for Mobile -->
+    <div id="floatingBookBtn" class="floating-book-btn" onclick="openBookingModal()">
+        <span>📝</span>
+        Book Now
+    </div>
 
     <!-- Admin Panel (Hidden) -->
     <div id="adminPanel" class="admin-panel" style="display: none;">
