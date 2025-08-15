@@ -161,7 +161,7 @@ header.scrolled {
 
 .hero-content {
     position: relative;
-    z-index: 2;
+    z-index: 5; /* Higher z-index to ensure content stays above everything */
 }
 
 .hero-content h2 {
@@ -195,6 +195,8 @@ header.scrolled {
     margin: 3rem auto;
     max-width: 900px;
     animation: slideInUp 1s ease-out 0.4s both;
+    position: relative;
+    z-index: 4; /* Ensure container is above other sections */
 }
 
 .selling-point {
@@ -207,6 +209,7 @@ header.scrolled {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    z-index: 3; /* Higher z-index to stay above next sections */
 }
 
 .selling-point::before {
@@ -1629,7 +1632,11 @@ footer::before {
     }
     
     .hero {
-        padding: 180px 0 200px; /* Increase bottom padding on mobile */
+        padding: 180px 0 250px; /* Further increase bottom padding on mobile */
+    }
+    
+    .selling-points {
+        margin-bottom: 3rem; /* Add extra bottom margin */
     }
     
     /* Remove selling point icon mobile styles */
@@ -1825,9 +1832,18 @@ footer::before {
         margin: 1.5rem 5px; /* Further reduce margin for very small screens */
     }
     
+    .hero {
+        padding: 140px 0 200px; /* Adjust for very small screens */
+    }
+    
     .selling-point {
         padding: 1rem;
         margin: 0; /* Ensure no additional margin */
+        z-index: 4; /* Even higher z-index for very small screens */
+    }
+    
+    .selling-points {
+        margin-bottom: 4rem; /* Extra bottom margin for very small screens */
     }
     
     .services {
