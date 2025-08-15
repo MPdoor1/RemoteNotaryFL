@@ -1704,14 +1704,18 @@ footer::before {
         min-height: 300px;
         justify-content: center;
         box-sizing: border-box;
-        width: 100%;
+        width: 100vw;
+        display: flex;
+        opacity: 1;
+        visibility: visible;
     }
     
     .slider-track {
-        width: 300%;
+        width: 300vw;
         transition: transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         touch-action: pan-y;
         box-sizing: border-box;
+        display: flex;
     }
     
     .slider-container {
@@ -1755,10 +1759,19 @@ footer::before {
     
     .step-content h3 {
         font-size: 1.5rem;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
     }
     
     .step-content p {
         font-size: 1rem;
+        color: #4a4a4a;
+        line-height: 1.6;
+    }
+    
+    .step-number {
+        color: #B8860B;
+        font-weight: bold;
     }
     
     /* Remove step icon mobile styles */
@@ -1893,10 +1906,22 @@ footer::before {
     
     .step-content h3 {
         font-size: 1.3rem;
+        color: #1a1a1a;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
     }
     
     .step-content p {
         font-size: 0.9rem;
+        color: #4a4a4a;
+        line-height: 1.5;
+        margin: 0;
+    }
+    
+    .step-number {
+        color: #B8860B;
+        font-size: 2.5rem;
+        font-weight: bold;
     }
     
     /* Remove step icon small mobile styles */
@@ -1904,11 +1929,25 @@ footer::before {
     .slide {
         padding: 1.5rem 0.5rem;
         min-height: 250px;
+        width: 100vw;
+        flex: 0 0 100vw;
+        display: flex;
+        opacity: 1;
+        visibility: visible;
     }
     
     .slider-container {
         margin: 0;
         overflow-x: hidden;
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        margin-left: -50vw;
+    }
+    
+    .slider-track {
+        width: 300vw;
+        display: flex;
     }
     
     .slider-dots {
