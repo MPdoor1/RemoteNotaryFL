@@ -1704,14 +1704,14 @@ footer::before {
         min-height: 300px;
         justify-content: center;
         box-sizing: border-box;
-        width: 100vw;
+        width: 100%;
         display: flex;
         opacity: 1;
         visibility: visible;
     }
     
     .slider-track {
-        width: 300vw;
+        width: 300%;
         transition: transform 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         touch-action: pan-y;
         box-sizing: border-box;
@@ -1726,7 +1726,7 @@ footer::before {
         margin-right: 0;
         padding: 0;
         touch-action: pan-y;
-        overflow-x: hidden;
+        overflow: hidden;
         position: relative;
         box-sizing: border-box;
     }
@@ -1929,8 +1929,8 @@ footer::before {
     .slide {
         padding: 1.5rem 0.5rem;
         min-height: 250px;
-        width: 100vw;
-        flex: 0 0 100vw;
+        width: 100%;
+        flex: 0 0 100%;
         display: flex;
         opacity: 1;
         visibility: visible;
@@ -1939,14 +1939,12 @@ footer::before {
     .slider-container {
         margin: 0;
         overflow-x: hidden;
-        width: 100vw;
+        width: 100%;
         position: relative;
-        left: 50%;
-        margin-left: -50vw;
     }
     
     .slider-track {
-        width: 300vw;
+        width: 300%;
         display: flex;
     }
     
